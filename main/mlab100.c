@@ -4,6 +4,15 @@
  * Copyright (C) 2019, Microbiota Labs Inc. and the MLAB100 contributors.
  *
  */
+//=============================================================================
+
+/* If we share sources between frameworks then we can identify esp-idf builds by
+   the presence of the ESP_PLATFORM manifest. */
+#if !defined(ESP_PLATFORM)
+# error "Framework not supported - source is currently ESP32 only"
+#endif // !ESP_PLATFORM
+
+//-----------------------------------------------------------------------------
 
 #include <stdio.h>
 #include <string.h>
@@ -31,6 +40,9 @@
 #endif // !ETH_ALEN
 
 #include "mlab100.h"
+#include "adc122s021.h"
+
+//-----------------------------------------------------------------------------
 
 static const char *p_tag = "mblMain"; // esp-idf logging prefix (tag) for this module
 
@@ -109,12 +121,24 @@ void app_main(void)
 
     ESP_LOGI(p_tag,"esp-idf " IDF_VER);
 
+    spi_device_handle_t opamp_adc = app_init_spi();
+    ESP_LOGD(p_tag,"opamp_adc %p",opamp_adc);
+
     /* TODO:IMPLEMENT: Either our main loop or code to create the necessary
        threads for whatever loops we want. */
     while (1) {
         /* Simple "slightly busy" loop where we sleep to allow the IDLE task to
            execute so that it can tickle its watchdog. */
         vTaskDelay(1000 / portTICK_PERIOD_MS); // this avoids the IDLE watchdog triggering
+
+#if 0 // simple test
+        uint32_t in1;
+        uint32_t in2;
+        esp_err_t err = adc122s021_read(opamp_adc,&in1,&in2);
+        if (ESP_OK == err) {
+            ESP_LOGI(p_tag,"IN1 0x%08X IN2 0x%08X",in1,in2);
+        }
+#endif // boolean
     }
 
     // This point should not be reached normally:
