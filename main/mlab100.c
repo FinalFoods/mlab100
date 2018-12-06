@@ -6,22 +6,27 @@
  */
 
 #include <stdio.h>
+#include <inttypes.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_system.h"
+#include "esp_log.h"
 #include "esp_spi_flash.h"
 
 #include "mlab100.h"
 
-static const char *p_tag = "Microbiota Labs";
-static const char *p_model = MLAB_MODEL; // H/W model identifier
-static const char *p_version = MLAB_VERSION; // F/W version identifier
+static const char *p_tag = "mblMain"; // esp-idf logging prefix (tag) for this module
 
+static const char *p_owner = "Microbiota Labs"; // Project owner
+static const char *p_model = MLAB_MODEL; // H/W model identifier
+static const char *p_version = STRINGIFY(MLAB_VERSION); // F/W version identifier
 
 void app_main()
 {
+    ESP_LOGI(p_tag,"Application starting " STRINGIFY(MLAB_VERSION) " (BUILDTIMESTAMP %" PRIX64 ")",(uint64_t)BUILDTIMESTAMP);
+
     printf("--------------------------------------\n");
-    printf(" Starting MLAB%s - version: %s\n", p_model, p_version);
+    printf(" %s: Starting MLAB%s - version: %s\n", p_owner, p_model, p_version);
     printf("--------------------------------------\n");
 
     /* Print chip information */
@@ -45,3 +50,6 @@ void app_main()
     fflush(stdout);
     esp_restart();
 }
+
+//=============================================================================
+// EOF mlab100.c
