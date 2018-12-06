@@ -1,5 +1,27 @@
-# Name,   Type, SubType, Offset,  Size, Flags
-# Note: if you change the phy_init or app partition offset, make sure to change the offset in Kconfig.projbuild
-nvs,      data, nvs,     ,        0x6000,
-phy_init, data, phy,     ,        0x1000,
-factory,  app,  factory, ,        1M,
+# Espressif ESP32 Partition Table
+#
+# 4M:
+#   0000->0FFF  secure boot digests (ESP32 opaque/private)
+#   1000->8000  bootloader
+#   8000->8BFF  partition table
+#
+# Do NOT change the phy_init or default app partition offsets without
+# also modifying the relevant sdkconfig options.
+#
+# NOTEs:
+# - The "encrypted" flag is ignored if the build does not have flash
+#   encryption enabled.
+# - It is not necessary to mark "app" partitions as encrypted, since
+#   they are always treated as encrypted if flash encryption is
+#   enabled,
+# - It is *NOT* possible to mark the "nvs" partitions as encrypted.
+# - Application partitions *MUST* be aligned on a 64K (0x10000)
+#   boundary.
+#
+# Name,   Type, SubType, Offset,   Size, Flags
+nvs,      data, nvs,     0x009000, 24K,
+phy_init, data, phy,     0x00f000, 4K,
+spare1,   0x40, 0x00,    0x010000, 952K,
+otadata,  data, ota,     0x0fe000, 8K,
+ota_0,    app,  ota_0,   0x100000, 1536K,
+ota_1,    app,  ota_1,   ,         1536K,
