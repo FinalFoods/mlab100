@@ -38,6 +38,15 @@ gcc git wget make libncurses-dev flex bison gperf python python-pip python-setup
 sudo easy_install pip
 ```
 
+**ASIDE**: If an attempt to `make` under Mac OS X fails with an error
+like:
+
+```
+Failed to load code for plug-in com.apple.dt.IDE.DVTKitDFRSupport
+```
+
+then you should install the latest `Xcode` package.
+
 ### Common
 
 Once the host support packages are installed you also need to ensure
