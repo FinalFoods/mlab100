@@ -14,7 +14,10 @@ application firmware.
 
 ## One-time development host setup
 
-**TODO**: Describe host packages needed and `esp-idf` python requirements.
+The toolchain for the build host is automatically downloaded the first
+time the top-level `make` is executed. So you do not need to install
+the Xtensa toolchain explicitly. However some host run-time packages
+are needed for the build to succeed.
 
 If needed, the [esp-idf Get Started](https://docs.espressif.com/projects/esp-idf/en/latest/get-started/)
 web page provides the definitive information on setting up a host for
@@ -22,11 +25,27 @@ esp-idf development.
 
 ### Linux
 
-List of packages to install. e.g. curl
+Install the following packages using the relevant tool for your
+installer (e.g. Kubuntu/Ubuntu/Debian use `sudo apt install`):
+
+```
+gcc git wget make libncurses-dev flex bison gperf python python-pip python-setuptools python-serial python-cryptography python-future python-pyparsing curl
+```
 
 ### Mac OS X
 
-TODO:
+```
+sudo easy_install pip
+```
+
+### Common
+
+Once the host support packages are installed you also need to ensure
+the Python world is configured for the `esp-idf` framework:
+
+```
+python -m pip install --user -r mlab100/3rd_party/esp-idf/requirements.txt
+```
 
 ## Make
 
