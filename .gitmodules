@@ -3,4 +3,4 @@
 	url = https://github.com/espressif/esp-idf.git
 [submodule "3rd_party/mkspiffs"]
 	path = 3rd_party/mkspiffs
-	url = https://github.com/igrr/mkspiffs.git
+	url = https://github.com/MicrobiotaLabs/mkspiffs.git
