@@ -9,12 +9,24 @@ The first step is to **recursively** clone the `mlab100` repository.
 git clone --recursive git@github.com:MicrobiotaLabs/mlab100.git
 ```
 
-See [`mlab100` project](mlab100/README.md) for details of the main
+See the [`mlab100` project](mlab100/README.md) for details of the main
 application firmware.
 
 ## One-time development host setup
 
 **TODO**: Describe host packages needed and `esp-idf` python requirements.
+
+If needed, the [esp-idf Get Started](https://docs.espressif.com/projects/esp-idf/en/latest/get-started/)
+web page provides the definitive information on setting up a host for
+esp-idf development.
+
+### Linux
+
+List of packages to install. e.g. curl
+
+### Mac OS X
+
+TODO:
 
 ## Make
 

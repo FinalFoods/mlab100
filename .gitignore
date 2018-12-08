@@ -8,3 +8,5 @@ compile_commands.json
 CTestTestfile.cmake
 build/
 sdkconfig.old
+3rd_party/packages
+3rd_party/tools
