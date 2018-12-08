@@ -31,11 +31,11 @@ HOSTPLATFORM:=$(shell uname -s)
 DIRPKGS=$(shell cd 3rd_party;pwd)/packages
 DIRTOOLS=$(shell cd 3rd_party;pwd)/tools
 
+ESPRESSIF_DOWNLOAD = https://dl.espressif.com/dl/
+
 ifeq "${HOSTPLATFORM}" "Linux"
 
 HOSTARCH:=$(shell uname -i)
-
-ESPRESSIF_DOWNLOAD = https://dl.espressif.com/dl/
 
 ifeq "${HOSTARCH}" "x86_64" # 64-bit
 TOOLSUBDIR = linux64
