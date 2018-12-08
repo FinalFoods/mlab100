@@ -80,7 +80,13 @@ ${DIRTOOLS}/bin/mkspiffs:
 	@echo "Installed mkspiffs"
 
 .PHONY: tools
-tools: $(DIRTOOLS)/$(TOOLSUBDIR) ${DIRTOOLS}/bin/mkspiffs 
+tools: $(DIRTOOLS)/$(TOOLSUBDIR)
+
+# Disable building mkspiffs for the moment since the default repo does
+# not build under the latest MacOSX Xcode due to i386 being
+# deprecated. We do not yet make use of mkspiffs (it was just in-case
+# we wanted to build a filesystem for a flash partition).
+#tools: $(DIRTOOLS)/$(TOOLSUBDIR) ${DIRTOOLS}/bin/mkspiffs
 
 #------------------------------------------------------------------------------
 
