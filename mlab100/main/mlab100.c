@@ -41,6 +41,7 @@
 
 #include "mlab100.h"
 #include "adc122s021.h"
+#include "ds18b20.h"
 
 //-----------------------------------------------------------------------------
 
@@ -49,6 +50,9 @@ static const char *p_tag = "mblMain"; // esp-idf logging prefix (tag) for this m
 static const char *p_owner = "Microbiota Labs"; // Project owner
 static const char *p_model = MLAB_MODEL; // H/W model identifier
 static const char *p_version = STRINGIFY(MLAB_VERSION); // F/W version identifier
+
+// GPIO pin for DS18B20 temperature sensor
+#define DS_PIN 32
 
 void app_main(void)
 {
@@ -124,9 +128,11 @@ void app_main(void)
     spi_device_handle_t opamp_adc = app_init_spi();
     ESP_LOGD(p_tag,"opamp_adc %p",opamp_adc);
 
-    /* TODO:IMPLEMENT: Either our main loop or code to create the necessary
-       threads for whatever loops we want. */
+    // initialize DS18B20 library
+    ds18b20_init(DS_PIN);
+
     while (1) {
+        printf("Temperature: %0.1f °C\n", ds18b20_get_temp());
         /* Simple "slightly busy" loop where we sleep to allow the IDLE task to
            execute so that it can tickle its watchdog. */
         vTaskDelay(1000 / portTICK_PERIOD_MS); // this avoids the IDLE watchdog triggering
