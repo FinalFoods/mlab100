@@ -6,7 +6,7 @@ Microbiota Personal Lab 100
 The first step is to **recursively** clone the `mlab100` repository.
 
 ```
-git clone --recursive git@github.com:MicrobiotaLabs/mlab100.git
+git clone --recursive https://github.com/MicrobiotaLabs/mlab100.git
 ```
 
 See the [`mlab100` project](mlab100/README.md) for details of the main
@@ -37,6 +37,9 @@ gcc git wget make libncurses-dev flex bison gperf python python-pip python-setup
 ```
 sudo easy_install pip
 ```
+
+A MacOS driver for the Silicon Labs USB-to-UART bridge can be downloaded from:
+  [Silabs](https://www.silabs.com/products/development-tools/software/usb-to-uart-bridge-vcp-drivers).
 
 **ASIDE**: If an attempt to `make` under Mac OS X fails with an error
 like:
@@ -85,6 +88,11 @@ export ESPPORT=/dev/ttyUSB3
 
 The above is even more relevant if building on a Mac OS X host since
 the `/dev/tty*` naming scheme is not used by Darwin.
+
+To set the default port on Darwin:
+```
+export ESPPORT=/dev/cu.SLAB_USBtoUART
+```
 
 **NOTE**: For the WROVER platform port A is the JTAG interface, with
 port B being the UART0 "monitor" connection.
