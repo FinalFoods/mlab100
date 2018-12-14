@@ -16,7 +16,7 @@
  *
  * @param pin GPIO pin for the DS18D20 data line.
  */
-extern void ds18b20_init(int pin);
+extern void ds18b20_init(void);
 
 /**
  * Get a temperature reading from the DS18D20. 

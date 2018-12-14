@@ -51,9 +51,6 @@ static const char *p_owner = "Microbiota Labs"; // Project owner
 static const char *p_model = MLAB_MODEL; // H/W model identifier
 static const char *p_version = STRINGIFY(MLAB_VERSION); // F/W version identifier
 
-// GPIO pin for DS18B20 temperature sensor
-#define DS_PIN 32
-
 void app_main(void)
 {
     ESP_LOGI(p_tag,"Application starting " STRINGIFY(MLAB_VERSION) " (BUILDTIMESTAMP %" PRIX64 ")",(uint64_t)BUILDTIMESTAMP);
@@ -129,7 +126,7 @@ void app_main(void)
     ESP_LOGD(p_tag,"opamp_adc %p",opamp_adc);
 
     // initialize DS18B20 library
-    ds18b20_init(DS_PIN);
+    ds18b20_init();
 
     while (1) {
         printf("Temperature: %0.1f °C\n", ds18b20_get_temp());

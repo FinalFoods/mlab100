@@ -19,8 +19,8 @@
 
 //-----------------------------------------------------------------------------
 
-static int DS_GPIO;
-static int init = 0;
+// GPIO pin for DS18B20 temperature sensor
+#define DS_GPIO (32)
 
 //=============================================================================
 
@@ -117,37 +117,31 @@ float ds18b20_get_temp(void) {
   unsigned char check;
   char temp1 = 0, temp2 = 0;
 
-  if (init == 1) {
+  check = ds18b20_RST_PULSE();
+  if (check == 1) {
+    ds18b20_send_byte(0xCC);  // skip ROM
+    ds18b20_send_byte(0x44);  // Convert T (move value into Scratchpad)
+    vTaskDelay(750 / portTICK_RATE_MS);
     check = ds18b20_RST_PULSE();
-    if (check == 1) {
-      ds18b20_send_byte(0xCC);  // skip ROM
-      ds18b20_send_byte(0x44);  // Convert T (move value into Scratchpad)
-      vTaskDelay(750 / portTICK_RATE_MS);
-      check = ds18b20_RST_PULSE();
-      ds18b20_send_byte(0xCC);  // skip ROM
-      ds18b20_send_byte(0xBE);  // Read Scratchpad
-      temp1 = ds18b20_read_byte();
-      temp2 = ds18b20_read_byte();
-      check = ds18b20_RST_PULSE();
-      //    printf("\ttemp1: 0x%X temp2: 0x%X ds18b20_RST_PULSE: %d\n", check, temp1, temp2); // DEBUG
-      float temp = 0;
-      temp = (float)(temp1 + (temp2 * 256)) / 16;
-      return temp;
-    }
-    else
-      return 0;
+    ds18b20_send_byte(0xCC);  // skip ROM
+    ds18b20_send_byte(0xBE);  // Read Scratchpad
+    temp1 = ds18b20_read_byte();
+    temp2 = ds18b20_read_byte();
+    check = ds18b20_RST_PULSE();
+    //    printf("\ttemp1: 0x%X temp2: 0x%X ds18b20_RST_PULSE: %d\n", check, temp1, temp2); // DEBUG
+    float temp = 0;
+    temp = (float)(temp1 + (temp2 * 256)) / 16;
+    return temp;
   }
   else
     return 0;
-}
+  }
 
 //-----------------------------------------------------------------------------
 // Initialize the DS18B20
 
-void ds18b20_init(int pin){
-  DS_GPIO = pin;
+void ds18b20_init(void){
   gpio_pad_select_gpio(DS_GPIO);
-  init=1;
 }
 
 //=============================================================================
