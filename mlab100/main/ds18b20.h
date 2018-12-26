@@ -2,7 +2,7 @@
 //=============================================================================
 
 #if !defined(_ds18b20_)
-#define __adc122s021_h (1)
+#define __ds18b20_ (1)
 
 /*
  * NOTE: this implementation assumes only one 1-Wire device connected to the bus.
@@ -14,7 +14,6 @@
 /**
  * Initialise the 1-Wire bus.
  *
- * @param pin GPIO pin for the DS18D20 data line.
  */
 extern void ds18b20_init(void);
 

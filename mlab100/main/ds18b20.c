@@ -17,10 +17,12 @@
 #include "driver/gpio.h"
 #include "rom/ets_sys.h"
 
+#include "mlab100.h"
 //-----------------------------------------------------------------------------
 
-// GPIO pin for DS18B20 temperature sensor
-#define DS_GPIO (32)
+// GPIO pin for DS18B20 temperature sensor connected to TEMP1W on J3
+//#define DS_GPIO (15)
+// #define DS_GPIO (32)
 
 //=============================================================================
 
