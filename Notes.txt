@@ -1,0 +1,45 @@
+EspressIF IDF - IoT Development Framework
+
+includes FreeRTOS
+
+
+cloned hello world and set IDF_PATH with 
+  
+  /dev/ttyUSB0
+  export ESPPORT=/dev/cu.SLAB_USBtoUART
+  
+  James Smith7:46 AM
+  
+  make flash monitor
+  
+  make
+  
+  make flash
+  
+  make monitor
+  Ctrl-]
+  
+  # Mac OS X Setup
+
+  On MAC OS X, before performing a build for the first time, the
+  following may need to be performed in a Mac OS X `Terminal` session:
+
+  ```
+  sudo easy_install pip
+  sudo pip install pyserial
+  ```
+
+  For the ESP32 DevKitC or WROVER systems you may need to download and
+  install a driver for the USB-to-UART bridge from:
+  [Silabs](https://www.silabs.com/products/development-tools/software/usb-to-uart-bridge-vcp-drivers).
+
+  With the USB driver installed, you can check if you need to able
+  access
+  
+  
+  make menuconfig
+  
+  
+  in sdkconfig:
+  CONFIG_ESP32_PANIC_PRINT_REBOOT=
+  CONFIG_ESP32_PANIC_GDBSTUB=y
