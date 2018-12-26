@@ -39,9 +39,12 @@
 # define ETH_ALEN (6)
 #endif // !ETH_ALEN
 
+#include "driver/gpio.h"
+
 #include "mlab100.h"
 #include "adc122s021.h"
 #include "ds18b20.h"
+#include "heater.h"
 
 //-----------------------------------------------------------------------------
 
@@ -125,9 +128,36 @@ void app_main(void)
     spi_device_handle_t opamp_adc = app_init_spi();
     ESP_LOGD(p_tag,"opamp_adc %p",opamp_adc);
 
-    // initialize DS18B20 library
+    // initialize the heater
+    heater_init();
+
+    // turn on 3.3V
+    gpio_set_direction(CONTROL_3V3, GPIO_MODE_OUTPUT);
+    gpio_set_level(CONTROL_3V3, 1);
+
+    // initialize the DS18B20 library
     ds18b20_init();
 
+    // turn on green LED
+    gpio_set_direction(GREEN_LED, GPIO_MODE_OUTPUT);
+    gpio_set_level(GREEN_LED, 1);
+
+    // turn on yellow LED
+    gpio_set_direction(YELLOW_LED, GPIO_MODE_OUTPUT);
+    gpio_set_level(YELLOW_LED, 1);
+
+    // turn on red LED
+    gpio_set_direction(RED_LED, GPIO_MODE_OUTPUT);
+    gpio_set_level(RED_LED, 1);
+
+    // turn on U/V LED 1
+    gpio_set_direction(UV1_LED, GPIO_MODE_OUTPUT);
+    gpio_set_level(UV1_LED, 1);
+
+     // turn on U/V LED 2
+    gpio_set_direction(UV2_LED, GPIO_MODE_OUTPUT);
+    gpio_set_level(UV2_LED, 1);
+       
     while (1) {
         printf("Temperature: %0.1f °C\n", ds18b20_get_temp());
         /* Simple "slightly busy" loop where we sleep to allow the IDLE task to

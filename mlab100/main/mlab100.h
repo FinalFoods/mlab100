@@ -42,6 +42,25 @@
 
 //-----------------------------------------------------------------------------
 
+// DS18B20 temperature sensor connected to TEMP1W on J3
+#define DS_GPIO (15)
+// #define DS_GPIO (32)
+
+// control 3.3V regulator
+#define CONTROL_3V3   (14)
+
+// board status LEDs
+#define GREEN_LED   (25)
+#define YELLOW_LED	(26)
+#define RED_LED		(27)
+
+//  u/v blue leds
+#define UV1_LED	(12)
+#define UV2_LED	(13)
+
+// heater PWM pin
+#define HEATER_CTRL		(32)
+
 #endif // !__mlab100_h
 
 //=============================================================================
