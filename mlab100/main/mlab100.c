@@ -128,7 +128,31 @@ void app_main(void)
     spi_device_handle_t opamp_adc = app_init_spi();
     ESP_LOGD(p_tag,"opamp_adc %p",opamp_adc);
 
-    // initialize the heater
+ 
+    // initialize GPIO output pins
+    #define GPIO_OUTPUT_PIN_SEL  ((1ULL<<CONTROL_3V3) | (1ULL<<GREEN_LED) | (1ULL<<YELLOW_LED) | (1ULL<<RED_LED) | (1ULL<<UV1_LED) | (1ULL<<UV2_LED) | (1ULL<<DS_GPIO))
+
+    gpio_config_t io_conf;
+    //disable interrupt
+    io_conf.intr_type = GPIO_PIN_INTR_DISABLE;
+    //set as output mode
+    io_conf.mode = GPIO_MODE_OUTPUT;
+    //bit mask of the pins that you want to set
+    io_conf.pin_bit_mask = GPIO_OUTPUT_PIN_SEL;
+    //disable pull-down mode
+    io_conf.pull_down_en = 0;
+    //disable pull-up mode
+    io_conf.pull_up_en = 0;
+    //configure GPIO with the given settings
+    gpio_config(&io_conf);
+
+    gpio_pad_select_gpio(GREEN_LED);
+    gpio_pad_select_gpio(YELLOW_LED);
+    // gpio_pad_select_gpio(RED_LED);
+    gpio_pad_select_gpio(CONTROL_3V3);
+
+
+   // initialize the heater
     heater_init();
 
     // turn on 3.3V
@@ -147,7 +171,7 @@ void app_main(void)
     gpio_set_level(YELLOW_LED, 1);
 
     // turn on red LED
-    gpio_set_direction(RED_LED, GPIO_MODE_OUTPUT);
+    // gpio_set_direction(RED_LED, GPIO_MODE_OUTPUT);
     gpio_set_level(RED_LED, 1);
 
     // turn on U/V LED 1
@@ -157,6 +181,8 @@ void app_main(void)
      // turn on U/V LED 2
     gpio_set_direction(UV2_LED, GPIO_MODE_OUTPUT);
     gpio_set_level(UV2_LED, 1);
+
+
        
     while (1) {
         printf("Temperature: %0.1f °C\n", ds18b20_get_temp());
@@ -164,14 +190,14 @@ void app_main(void)
            execute so that it can tickle its watchdog. */
         vTaskDelay(1000 / portTICK_PERIOD_MS); // this avoids the IDLE watchdog triggering
 
-#if 0 // simple test
+//#if 0 // simple test
         uint32_t in1;
         uint32_t in2;
         esp_err_t err = adc122s021_read(opamp_adc,&in1,&in2);
         if (ESP_OK == err) {
             ESP_LOGI(p_tag,"IN1 0x%08X IN2 0x%08X",in1,in2);
         }
-#endif // boolean
+//#endif // boolean
     }
 
     // This point should not be reached normally:
