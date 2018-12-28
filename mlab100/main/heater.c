@@ -25,7 +25,7 @@
 #define LEDC_HS_CH0_CHANNEL    LEDC_CHANNEL_0
 
 #define LEDC_TEST_CH_NUM       (1)
-#define LEDC_TEST_DUTY         (100)
+#define LEDC_TEST_DUTY         (7232)
 /*
  * Prepare and set configuration of timers
  * that will be used by LED Controller
