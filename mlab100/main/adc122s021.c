@@ -17,7 +17,6 @@
 static const char *p_tag = "adc"; // for esp-idf logging
 
 //=============================================================================
-
 #define PIN_NUM_MISO (19) // IC4#7 Dout
 #define PIN_NUM_MOSI (23) // IC4#6 Din
 #define PIN_NUM_CLK (18) // IC4#8 SCLK
@@ -32,7 +31,8 @@ static spi_bus_config_t spi_buscfg = {
     .sclk_io_num = PIN_NUM_CLK,
     .quadwp_io_num = -1,
     .quadhd_io_num = -1,
-    .max_transfer_sz = 4
+//    .max_transfer_sz = 4
+    .max_transfer_sz = 8
 };
 
 static spi_device_interface_config_t spi_devcfg = {
@@ -97,10 +97,15 @@ static esp_err_t adc_conversion(spi_device_handle_t spi,uint8_t channel,uint32_t
     t.flags = (SPI_TRANS_USE_RXDATA | SPI_TRANS_USE_TXDATA);
     // TODO:ASCERTAIN: Can we do this (TX and RX in same "transmit()" call?
     // We may have to do a separate read transaction to get the 2-bytes of ADC data
-    t.length = (2 + 2);
+    t.length = (8 + 8);// (2 + 2);
     t.rxlength = 2;
     t.tx_data[0] = REG_CTRL_ADD(channel);
+//    t.tx_data[0] = 0x20;
     t.tx_data[1] = 0x00;
+    t.tx_data[2] = 0x00;
+    t.tx_data[3] = 0x00;
+  
+
     t.user = NULL;
 
     // mutex lock
