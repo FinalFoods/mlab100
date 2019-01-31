@@ -25,6 +25,7 @@
 #define ONEWIRE_SEARCH     0xf0
 
 static portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
+static bool setup_done = false;
 
 // Waits up to `max_wait` microseconds for the specified pin to go high.
 // Returns true if successful, false if the bus never comes high (likely
@@ -63,7 +64,10 @@ static void setup_pin(gpio_num_t pin, bool open_drain)
 //
 bool onewire_reset(gpio_num_t pin)
 {
-    setup_pin(pin, true);
+    if (!setup_done) {
+        setup_pin(pin, true);
+        setup_done = true;
+    }
 
     gpio_set_level(pin, 1);
     // wait until the wire is high... just in case
