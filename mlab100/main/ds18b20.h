@@ -4,6 +4,8 @@
 #if !defined(_ds18b20_)
 #define __ds18b20_ (1)
 
+#include "onewire.h"
+
 /*
  * NOTE: this implementation assumes only one 1-Wire device connected to the bus.
  *
@@ -22,7 +24,7 @@ extern void ds18b20_init(void);
  *
  * @return temperature in degrees Celsius.
  */
-extern float ds18b20_get_temp(void);
+extern float ds18b20_get_temp(onewire_addr_t device_addr);
 
 //-----------------------------------------------------------------------------
 

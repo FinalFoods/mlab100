@@ -17,6 +17,7 @@
 #include "driver/gpio.h"
 #include "rom/ets_sys.h"
 
+#include "onewire.h"
 #include "mlab100.h"
 //-----------------------------------------------------------------------------
 
@@ -25,6 +26,8 @@
 // #define DS_GPIO (32)
 
 //=============================================================================
+
+#ifdef NODEF
 
 //-----------------------------------------------------------------------------
 // Send one bit to the 1-Wire bus
@@ -138,7 +141,35 @@ float ds18b20_get_temp(void) {
   else
     return 0;
   }
+#endif
 
+float ds18b20_get_temp(onewire_addr_t device_addr) {
+  char temp1 = 0, temp2 = 0;
+  bool reply;
+
+  reply = onewire_reset(ONEWIRE_PIN);
+  if (reply) {
+
+    onewire_select(ONEWIRE_PIN, device_addr);
+    onewire_write(ONEWIRE_PIN, 0x44); // Convert T (move value into Scratchpad)
+    vTaskDelay(750 / portTICK_RATE_MS);
+    onewire_reset(ONEWIRE_PIN);
+
+    onewire_select(ONEWIRE_PIN, device_addr);
+    onewire_write(ONEWIRE_PIN, 0xBE); // Read Scratchpad
+
+    temp1 = onewire_read(ONEWIRE_PIN);
+    temp2 = onewire_read(ONEWIRE_PIN);
+    reply = onewire_reset(ONEWIRE_PIN);
+
+    // printf("\ttemp1: 0x%X temp2: 0x%X ds18b20_RST_PULSE: %d\n", temp1, temp2, reply); // DEBUG
+    float temp = 0;
+    temp = (float)(temp1 + (temp2 * 256)) / 16;
+    return temp;
+  }
+  else
+    return 0;
+}
 //-----------------------------------------------------------------------------
 // Initialize the DS18B20
 
