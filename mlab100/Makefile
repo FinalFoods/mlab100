@@ -33,14 +33,9 @@ endif # all other build hosts
 
 PROJECT_NAME := mlab100
 
-# If we need to provide our own components then we can reference them
-# here. e.g. these can be 3rd-party esp-idf extensions or our own
-# libraries:
-# EXTRA_COMPONENT_DIRS := \
-#	${FW_ESP32_TOPDIR}/components/microbiotalabs_component \
-#	${FW_ESP32_TOPDIR}/3rd_party/components/some_3rd_party_submodule_or_fork
-
+# Reference extra components (outside the esp-idf tree):
 EXTRA_COMPONENT_DIRS := \
+	${TOPDIR_MLAB100}/components/mlab \
 	${TOPDIR_MLAB100}/3rd_party/components/onewire
 
 include $(IDF_PATH)/make/project.mk

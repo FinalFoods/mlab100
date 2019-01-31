@@ -1,0 +1,12 @@
+#==============================================================================
+# This make fragment is included in the top-level project make pass
+# (i.e. it is included during project.mk evaluation).
+
+#.PHONY: something_mlab_specific
+#something_mlab_specific:
+#	@${MAKE} -w -C ${TOPDIR_MLAB100} -f Makefile.some_step some_target
+
+#all_binaries: something_mlab_specific
+
+#==============================================================================
+# EOF Makefile.projbuild
