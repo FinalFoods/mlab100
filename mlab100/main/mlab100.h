@@ -46,6 +46,9 @@
 #define DS_GPIO (15)
 // #define DS_GPIO (32)
 
+// 1wire bus
+#define ONEWIRE_PIN (15)
+
 // control 3.3V regulator
 #define CONTROL_3V3   (14)
 

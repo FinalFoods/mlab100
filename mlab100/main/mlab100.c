@@ -45,6 +45,7 @@
 #include "adc122s021.h"
 #include "ds18b20.h"
 #include "heater.h"
+#include "onewire.h"
 
 //-----------------------------------------------------------------------------
 
@@ -53,6 +54,10 @@ static const char *p_tag = "mblMain"; // esp-idf logging prefix (tag) for this m
 static const char *p_owner = "Microbiota Labs"; // Project owner
 static const char *p_model = MLAB_MODEL; // H/W model identifier
 static const char *p_version = STRINGIFY(MLAB_VERSION); // F/W version identifier
+
+static onewire_search_t onewire_ds;
+#define MAX_SENSORS 3
+static onewire_addr_t sensors[MAX_SENSORS];
 
 void app_main(void)
 {
@@ -129,8 +134,8 @@ void app_main(void)
     ESP_LOGD(p_tag,"opamp_adc %p",opamp_adc);
 
  
-    // initialize GPIO output pins
-    #define GPIO_OUTPUT_PIN_SEL  ((1ULL<<CONTROL_3V3) | (1ULL<<GREEN_LED) | (1ULL<<YELLOW_LED) | (1ULL<<RED_LED) | (1ULL<<UV1_LED) | (1ULL<<UV2_LED) | (1ULL<<DS_GPIO))
+    // initialize GPIO output pins -- onewire is setup by its own library
+    #define GPIO_OUTPUT_PIN_SEL  ((1ULL<<CONTROL_3V3) | (1ULL<<GREEN_LED) | (1ULL<<YELLOW_LED) | (1ULL<<RED_LED) | (1ULL<<UV1_LED) | (1ULL<<UV2_LED) )
 
     gpio_config_t io_conf;
     //disable interrupt
@@ -159,20 +164,42 @@ void app_main(void)
     gpio_set_direction(CONTROL_3V3, GPIO_MODE_OUTPUT);
     gpio_set_level(CONTROL_3V3, 1);
 
+    // initilize 1wire
+    if (onewire_reset(ONEWIRE_PIN))
+        printf("1Wire reset. Detected devices.\n");
+    else
+        printf("1Wire reset. No detected devices.\n");
+
+    int count = 0;
+    // 1wire search
+    onewire_search_start(&onewire_ds);
+    do {
+        onewire_addr_t device_addr;
+
+        device_addr = onewire_search_next(&onewire_ds, ONEWIRE_PIN);
+        if (device_addr != ONEWIRE_NONE) {
+            sensors[count++] = device_addr;
+            printf ("\t0x%llx\n", device_addr);
+        } else
+            printf("Error searching the 1wire bus.\n");
+
+    } while(!onewire_ds.last_device_found && (count <= MAX_SENSORS));
+    printf("1Wire search: found %d devices.\n", count);
+
     // initialize the DS18B20 library
     ds18b20_init();
 
     // turn on green LED
     gpio_set_direction(GREEN_LED, GPIO_MODE_OUTPUT);
-    gpio_set_level(GREEN_LED, 1);
+    gpio_set_level(GREEN_LED, 0);
 
     // turn on yellow LED
     gpio_set_direction(YELLOW_LED, GPIO_MODE_OUTPUT);
-    gpio_set_level(YELLOW_LED, 1);
+    gpio_set_level(YELLOW_LED, 0);
 
     // turn on red LED
     // gpio_set_direction(RED_LED, GPIO_MODE_OUTPUT);
-    gpio_set_level(RED_LED, 1);
+    gpio_set_level(RED_LED, 0);
 
     // turn on U/V LED 1
     gpio_set_direction(UV1_LED, GPIO_MODE_OUTPUT);
@@ -182,21 +209,38 @@ void app_main(void)
     gpio_set_direction(UV2_LED, GPIO_MODE_OUTPUT);
     gpio_set_level(UV2_LED, 1);
 
-
+    int toggle = 1;
        
     while (1) {
-        printf("Temperature: %0.1f °C\n", ds18b20_get_temp());
+        printf("Temperature[0x%llx]: %0.1f °C\n", sensors[0], ds18b20_get_temp(sensors[0]));
+        printf("Temperature[0x%llx]: %0.1f °C\n", sensors[1], ds18b20_get_temp(sensors[1]));
+        printf("Temperature[0x%llx]: %0.1f °C\n", sensors[2], ds18b20_get_temp(sensors[2]));
+ 
         /* Simple "slightly busy" loop where we sleep to allow the IDLE task to
            execute so that it can tickle its watchdog. */
         vTaskDelay(1000 / portTICK_PERIOD_MS); // this avoids the IDLE watchdog triggering
 
 //#if 0 // simple test
+        // turn on U/V LED 1
+        gpio_set_direction(UV1_LED, GPIO_MODE_OUTPUT);
+        gpio_set_level(UV1_LED, toggle);
+
+        // turn on U/V LED 2
+        gpio_set_direction(UV2_LED, GPIO_MODE_OUTPUT);
+        gpio_set_level(UV2_LED, toggle);
+
         uint32_t in1;
         uint32_t in2;
         esp_err_t err = adc122s021_read(opamp_adc,&in1,&in2);
         if (ESP_OK == err) {
             ESP_LOGI(p_tag,"IN1 0x%08X IN2 0x%08X",in1,in2);
         }
+        
+        if (toggle) 
+            toggle = 0;
+        else
+            toggle = 1;
+
 //#endif // boolean
     }
 
