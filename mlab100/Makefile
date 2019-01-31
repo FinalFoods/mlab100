@@ -24,9 +24,9 @@ export GITTAG = ${shell git describe --tags 2> /dev/null; if [ $$? -ne 0 ]; then
 
 # Example for adding build host specific rules or definitions if needed:
 ifeq "${HOSTPLATFORM}" "Linux"
-# export LD_LIBRARY_PATH= ${FW_ESP32_TOPDIR}/3rd_party/tools/lib
+# export LD_LIBRARY_PATH= ${TOPDIR_MLAB100}/3rd_party/tools/lib
 else ifeq "${HOSTPLATFORM}" "Darwin"
-# export DYLD_LIBRARY_PATH= ${FW_ESP32_TOPDIR}/3rd_party/tools/lib
+# export DYLD_LIBRARY_PATH= ${TOPDIR_MLAB100}/3rd_party/tools/lib
 else # all other build hosts
 $(error "Build host not supported")
 endif # all other build hosts
@@ -36,7 +36,12 @@ PROJECT_NAME := mlab100
 # If we need to provide our own components then we can reference them
 # here. e.g. these can be 3rd-party esp-idf extensions or our own
 # libraries:
-#EXTRA_COMPONENT_DIRS := <set of paths to extra components>
+# EXTRA_COMPONENT_DIRS := \
+#	${FW_ESP32_TOPDIR}/components/microbiotalabs_component \
+#	${FW_ESP32_TOPDIR}/3rd_party/components/some_3rd_party_submodule_or_fork
+
+EXTRA_COMPONENT_DIRS := \
+	${TOPDIR_MLAB100}/3rd_party/components/onewire
 
 include $(IDF_PATH)/make/project.mk
 
