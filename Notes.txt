@@ -43,3 +43,37 @@ cloned hello world and set IDF_PATH with
   in sdkconfig:
   CONFIG_ESP32_PANIC_PRINT_REBOOT=
   CONFIG_ESP32_PANIC_GDBSTUB=y
+
+==============================================================================
+
+Pre-built BLE Android App is available:	ESP32WiFiBLE
+
+  Uses: https://desire.giesecke.tk/index.php/2018/04/06/esp32-wifi-setup-over-ble/
+  Or:   https://desire.giesecke.tk/index.php/2018/04/10/esp32-wifi-setup-over-bluetooth-serial/
+
+  Source code for ESP32 (BLE):			https://bitbucket.org/beegee1962/esp32_wifi_ble_esp32
+  Source code for ESP32 (Bluetooth Serial):	https://bitbucket.org/beegee1962/esp32_wifi_bts_esp32
+  Source code for Android: 			https://bitbucket.org/beegee1962/esp32_wifi_ble_android
+
+------------------------------------------------------------------------------
+
+Source for Espressif example BluFi:
+  https://github.com/EspressifApp/EspBlufiForAndroid
+
+  https://github.com/espressif/esp-idf-provisioning-android
+
+Alt:  https://docs.espressif.com/projects/esp-idf/en/latest/api-guides/blufi.html
+Alt:  https://github.com/eagi223/esp-idf_Bluetooth_Multi-Service
+
+https://docs.espressif.com/projects/esp-idf/en/latest/api-reference/bluetooth/esp_blufi.html
+
+https://docs.espressif.com/projects/esp-idf/en/latest/api-guides/blufi.html
+
+https://github.com/espressif/esp-idf/tree/master/examples/bluetooth/blufi
+
+------------------------------------------------------------------------------
+
+AP CaptivePortal
+  https://github.com/zhouhan0126/WIFIMANAGER-ESP32
+
+==============================================================================
