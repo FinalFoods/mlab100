@@ -19,6 +19,6 @@ CFLAGS += -fstack-usage
 COMPONENT_ADD_INCLUDEDIRS := include
 COMPONENT_SRCDIRS := src
 
-# If we want to embed files as binary blobs:
-#COMPONENT_EMBED_TXTFILES := <file1>
-#COMPONENT_EMBED_TXTFILES += <file2>
+# Embed files as binary blobs:
+COMPONENT_EMBED_TXTFILES := certs/cacert.pem
+COMPONENT_EMBED_TXTFILES += certs/prvtkey.pem

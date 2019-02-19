@@ -21,4 +21,9 @@ config MLAB_BLUFI
   help
     If enabled this option provides support for configuring the WiFi via a BluFi mobile application.
 
+config MLAB_HTTPD
+  bool "Enable HTTPD support"
+  help
+    If enabled this option provides a HTTPD server.
+
 endmenu  # mlab

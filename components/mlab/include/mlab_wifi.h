@@ -24,9 +24,10 @@ extern "C" {
  * Initialise the WiFi networking world and attach as a STA if configured
  * appropriately.
  *
+ * @param p_ctx Pointer to private context (or NULL if not required).
  * @return ESP_OK on success, otherwise error indication.
  */
-esp_err_t wifi_initialise(void);
+esp_err_t wifi_initialise(void *p_ctx);
 
 //-----------------------------------------------------------------------------
 

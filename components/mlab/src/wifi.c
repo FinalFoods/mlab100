@@ -9,6 +9,7 @@
 //=============================================================================
 
 #include "mlab_blufi.h"
+#include "mlab_webserver.h"
 
 #if !defined(DEFAULT_RSSI)
 # define DEFAULT_RSSI (-127)
@@ -48,6 +49,15 @@ static esp_err_t event_handler(void *p_ctx,system_event_t *p_event)
 #if CONFIG_MLAB_BLUFI
             blufi_wifi_sta_connected(mode);
 #endif // CONFIG_MLAB_BLUFI
+
+#if CONFIG_MLAB_HTTPD
+            {
+                httpd_handle_t *p_server = (httpd_handle_t *)p_ctx;
+                if (p_server && (NULL == *p_server)) {
+                    *p_server = webserver_start(p_ctx);
+                }
+            }
+#endif // CONFIG_MLAB_HTTPD
         }
         break;
 
@@ -75,6 +85,17 @@ static esp_err_t event_handler(void *p_ctx,system_event_t *p_event)
     case SYSTEM_EVENT_STA_DISCONNECTED: /**< ESP32 STAtion disconnected from AP. */
         /* This is a workaround as ESP32 WiFi libraries do not currently
            auto-reassociate. */
+
+#if CONFIG_MLAB_HTTPD
+        {
+            httpd_handle_t *p_server = (httpd_handle_t *)p_ctx;
+            if (p_server && *p_server) {
+                webserver_stop(*p_server,p_ctx);
+                *p_server = NULL;
+            }
+        }
+#endif // CONFIG_MLAB_HTTPD
+
 #if CONFIG_MLAB_BLUFI
         blufi_connection(false,NULL,0,NULL);
 #endif // CONFIG_MLAB_BLUFI
@@ -180,13 +201,13 @@ static esp_err_t event_handler(void *p_ctx,system_event_t *p_event)
 
 //-----------------------------------------------------------------------------
 
-esp_err_t wifi_initialise(void)
+esp_err_t wifi_initialise(void *p_ctx)
 {
     esp_err_t result = ESP_OK;
 
     tcpip_adapter_init();
 
-    result = esp_event_loop_init(event_handler,NULL);
+    result = esp_event_loop_init(event_handler,p_ctx);
     if (ESP_OK == result) {
         wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 

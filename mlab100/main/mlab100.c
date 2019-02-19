@@ -48,6 +48,7 @@
 #include "onewire.h"
 
 #include "mlab_blufi.h"
+#include "mlab_webserver.h"
 
 //-----------------------------------------------------------------------------
 
@@ -134,15 +135,26 @@ void app_main(void)
     ESP_LOGI(p_tag,"esp-idf " IDF_VER);
 
     app_common_platform_init();
+#if defined(CONFIG_MLAB_HTTPD) && CONFIG_MLAB_HTTPD
+    /* TODO:DECIDE: This is a quick hack solution to track the webserver
+       handle. We probably want to pass a private context structure one field of
+       which is the webserver handle. We should decide how we manage that
+       context and pass the structure reference here instead and update the
+       common/shared mlab/src/webserver.c and wifi.c accordingly. */
+    static httpd_handle_t webserver = NULL;
+    void *p_ctx = &webserver;
+#else // !CONFIG_MLAB_HTTPD
+    void *p_ctx = NULL;
+#endif // !CONFIG_MLAB_HTTPD
+    if (ESP_OK == wifi_initialise(p_ctx)) {
 #if defined(CONFIG_MLAB_BLUFI) && CONFIG_MLAB_BLUFI
-    if (ESP_OK == wifi_initialise()) {
         if (ESP_OK != mlab_blufi_start()) {
             ESP_LOGE(p_tag,"Failed to start BluFi");
         }
+#endif // CONFIG_MLAB_BLUFI
     } else {
         ESP_LOGE(p_tag,"Failed to initialise WiFi");
     }
-#endif // CONFIG_MLAB_BLUFI
 
     spi_device_handle_t opamp_adc = app_init_spi();
     ESP_LOGD(p_tag,"opamp_adc %p",opamp_adc);
@@ -193,8 +205,16 @@ void app_main(void)
         if (device_addr != ONEWIRE_NONE) {
             sensors[count++] = device_addr;
             printf ("\t0x%llx\n", device_addr);
-        } else
-            printf("Error searching the 1wire bus.\n");
+        } else {
+            static volatile TickType_t ticklast = 0;
+            volatile TickType_t ticknow = xTaskGetTickCount();
+            if ((ticknow - ticklast) >= 1000) {
+                printf("Error searching the 1wire bus.\n");
+                ticklast = ticknow;
+            } else {
+                vTaskDelay(10); // avoids the watchdog triggering // which we still get with a simple taskYIELD() call
+            }
+        }
 
     } while(!onewire_ds.last_device_found && (count <= MAX_SENSORS));
     printf("1Wire search: found %d devices.\n", count);
