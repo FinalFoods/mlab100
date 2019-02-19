@@ -47,13 +47,16 @@
 #include "heater.h"
 #include "onewire.h"
 
+#include "mlab_blufi.h"
+
 //-----------------------------------------------------------------------------
 
-static const char *p_tag = "mblMain"; // esp-idf logging prefix (tag) for this module
+static const char * const p_tag = "mblMain"; // esp-idf logging prefix (tag) for this module
 
-static const char *p_owner = "Microbiota Labs"; // Project owner
-static const char *p_model = MLAB_MODEL; // H/W model identifier
-static const char *p_version = STRINGIFY(MLAB_VERSION); // F/W version identifier
+const char * const p_owner = "Microbiota Labs"; // Project owner
+const char * const p_model = MLAB_MODEL; // H/W model identifier
+const char * const p_version = STRINGIFY(MLAB_VERSION); // F/W version identifier
+const char * const p_device = "MLAB" MLAB_MODEL; // Human-readable device name
 
 static onewire_search_t onewire_ds;
 #define MAX_SENSORS 3
@@ -64,7 +67,7 @@ void app_main(void)
     ESP_LOGI(p_tag,"Application starting " STRINGIFY(MLAB_VERSION) " (BUILDTIMESTAMP %" PRIX64 ")",(uint64_t)BUILDTIMESTAMP);
 
     printf("--------------------------------------\n");
-    printf(" %s: Starting MLAB%s - version: %s\n", p_owner, p_model, p_version);
+    printf(" %s: Starting %s - version: %s\n", p_owner, p_device, p_version);
     printf("--------------------------------------\n");
 
     /* Print chip information */
@@ -99,7 +102,7 @@ void app_main(void)
         uint8_t defmac[ETH_ALEN];
         esp_err_t rcode = esp_efuse_mac_get_default(defmac);
         if (ESP_OK == rcode) {
-            ESP_LOGI(p_tag,"Default base MAC %02X:%02X:%02X:%02X:%02X:%02X",defmac[0],defmac[1],defmac[2],defmac[3],defmac[4],defmac[5]);
+            ESP_LOGI(p_tag,"Default base MAC " PRIXMAC "",PRINTMAC(defmac));
             /* We could call esp_base_mac_addr_set(defmac) to stop warnings
                about using the default (factory) BLK0 value, but the code really
                only expects that function to be called if BLK3 or external MAC
@@ -130,9 +133,19 @@ void app_main(void)
 
     ESP_LOGI(p_tag,"esp-idf " IDF_VER);
 
+    app_common_platform_init();
+#if defined(CONFIG_MLAB_BLUFI) && CONFIG_MLAB_BLUFI
+    if (ESP_OK == wifi_initialise()) {
+        if (ESP_OK != mlab_blufi_start()) {
+            ESP_LOGE(p_tag,"Failed to start BluFi");
+        }
+    } else {
+        ESP_LOGE(p_tag,"Failed to initialise WiFi");
+    }
+#endif // CONFIG_MLAB_BLUFI
+
     spi_device_handle_t opamp_adc = app_init_spi();
     ESP_LOGD(p_tag,"opamp_adc %p",opamp_adc);
-
  
     // initialize GPIO output pins -- onewire is setup by its own library
     #define GPIO_OUTPUT_PIN_SEL  ((1ULL<<CONTROL_3V3) | (1ULL<<GREEN_LED) | (1ULL<<YELLOW_LED) | (1ULL<<RED_LED) | (1ULL<<UV1_LED) | (1ULL<<UV2_LED) )
