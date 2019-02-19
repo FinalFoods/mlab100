@@ -15,4 +15,10 @@ config MLAB_PLATFORM_ESP32_WROVER_KIT
   bool "ESP32-WROVER-KIT"
 endchoice
 
+config MLAB_BLUFI
+  bool "Enable BluFi (BLE-GATT) support"
+  depends on BT_ENABLED
+  help
+    If enabled this option provides support for configuring the WiFi via a BluFi mobile application.
+
 endmenu  # mlab

@@ -8,7 +8,17 @@
 
 //-----------------------------------------------------------------------------
 
-// TODO: Implement any functions/data as required
+EventGroupHandle_t eventgroup_app;
+
+//-----------------------------------------------------------------------------
+
+void app_common_platform_init(void)
+{
+    // Must be created before the networking is initialised:
+    eventgroup_app = xEventGroupCreate();
+
+    return;
+}
 
 //==============================================================================
 // EOF mlab.c

@@ -1,12 +1,14 @@
 // mlab.h
 //==============================================================================
 
-#if !defined(__mlab_h)
-# define __mlab_h (1)
+//==============================================================================
+
+#pragma once
 
 //-----------------------------------------------------------------------------
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
 
@@ -55,7 +57,25 @@
 
 //-----------------------------------------------------------------------------
 
-// TODO:DEFINE: any pre-processor manifests needed
+// Shorthand to save typing when printing MAC addresses (e.g. BSSID values):
+#define PRIXMAC "%02X:%02X:%02X:%02X:%02X:%02X"
+#define PRINTMAC(m) (m)[0],(m)[1],(m)[2],(m)[3],(m)[4],(m)[5]
+
+//-----------------------------------------------------------------------------
+
+extern EventGroupHandle_t eventgroup_app; /**< Global application event flags. */
+
+#if (configUSE_16_BIT_TICKS == 0)
+// 24 event flags per event group
+#elif (configUSE_16_BIT_TICKS == 1)
+// 8 event flags per event group
+# error "We require a configuration with 24-bit event group (configUSE_16_BIT_TICKS==0)"
+#else // unknown
+# error "Unknown configUSE_16_BIT_TICKS setting"
+#endif // unknown
+
+#define EG_WIFI_CONNECTED (BIT0) // WiFi STA has IP address
+// All other valid bit positions are currently undefined.
 
 //-----------------------------------------------------------------------------
 
@@ -65,17 +85,24 @@ extern "C" {
 
 //-----------------------------------------------------------------------------
 
-// TODO: provide any exported prototypes, etc.
+// NUL-terminated strings provided by the main application:
+const char * const p_owner;
+const char * const p_model;
+const char * const p_version;
+const char * const p_device;
+
+//-----------------------------------------------------------------------------
+
+/**
+ * Common platform initialisation shared between firmware applications.
+ */
+void app_common_platform_init(void);
 
 //-----------------------------------------------------------------------------
 
 #if defined(__cplusplus)
 }
 #endif // __cplusplus
-
-//-----------------------------------------------------------------------------
-
-#endif // !__mlab_h
 
 //==============================================================================
 // EOF mlab.h
