@@ -109,7 +109,7 @@ using:
 adb pull /sdcard/btsnoop_hci.log
 ```
 
-and the file viewed with the Wireshark packet analsys tool. It is
+and the file viewed with the Wireshark packet analysis tool. It is
 worth filtering on the wireshark view on the Bluetooth address of the
 actual ESP32 device being interacted with to cut down on the bluetooth
 noise. e.g. Filter for advertisements:
