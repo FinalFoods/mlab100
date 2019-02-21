@@ -121,6 +121,34 @@ or for actual GATT data packets:
   (bluetooth.src == 24:0a:c4:1d:46:12) || (bluetooth.dst == 24:0a:c4:1d:46:12)
 ```
 
+### react
+
+Looking at the [react BLE manager
+README.md](https://github.com/innoveit/react-native-ble-manager)
+documentation shows that to write from the Client to the Server on
+UUID **`0xFF01`** should just be a case of calling:
+
+```
+write(peripheralId,serviceUUID=0xFFFF,characteristicUUID=0xFF01,data=<byte-array>,maxByteSize)
+```
+
+It is unclear (since I have not yet used that react package) if:
+
+```
+startNotification(peripheralId,serviceUUID=0xFFFF,characteristicUUID=0xFF02)
+```
+
+is enough for the Client to receive asynchronous data from UUID
+**`0xFF02`**, or whether it needs to be polled using:
+
+```
+read(peripheralId,serviceUUID=0xFFFF,characteristicUUID=0xFF02)
+```
+
+Both the write (Client-to-Server) and read/notification
+(Server-to-Client) byte-array data is a simple binary packet format as
+detailed below.
+
 ### BluFi
 
 As shown above a simple interface using a characteristic for
@@ -143,34 +171,34 @@ type | subtype | name                                        | notes
 ---:|:-------:|:---------------------------------------------|:-----
 CTRL | 0x00    | BLUFI_TYPE_CTRL_SUBTYPE_ACK                 |
 CTRL | 0x01    | BLUFI_TYPE_CTRL_SUBTYPE_SET_SEC_MODE        |
-CTRL | 0x02    | BLUFI_TYPE_CTRL_SUBTYPE_SET_WIFI_OPMODE     |
-CTRL | 0x03    | BLUFI_TYPE_CTRL_SUBTYPE_CONN_TO_AP          |
+CTRL | 0x02    | BLUFI_TYPE_CTRL_SUBTYPE_SET_WIFI_OPMODE     | configure WiFi mode : 1-byte (wifi_mode_t) value
+CTRL | 0x03    | BLUFI_TYPE_CTRL_SUBTYPE_CONN_TO_AP          | request Server to connect to configured AP
 CTRL | 0x04    | BLUFI_TYPE_CTRL_SUBTYPE_DISCONN_FROM_AP     |
-CTRL | 0x05    | BLUFI_TYPE_CTRL_SUBTYPE_GET_WIFI_STATUS     |
+CTRL | 0x05    | BLUFI_TYPE_CTRL_SUBTYPE_GET_WIFI_STATUS     | request current WiFi connection status
 CTRL | 0x06    | BLUFI_TYPE_CTRL_SUBTYPE_DEAUTHENTICATE_STA  |
-CTRL | 0x07    | BLUFI_TYPE_CTRL_SUBTYPE_GET_VERSION         |
+CTRL | 0x07    | BLUFI_TYPE_CTRL_SUBTYPE_GET_VERSION         | request BluFi version (**NOTE**: This is **NOT** the firmware version string, but the description of the BluFi protocol implemented)
 CTRL | 0x08    | BLUFI_TYPE_CTRL_SUBTYPE_DISCONNECT_BLE      |
-CTRL | 0x09    | BLUFI_TYPE_CTRL_SUBTYPE_GET_WIFI_LIST       |
+CTRL | 0x09    | BLUFI_TYPE_CTRL_SUBTYPE_GET_WIFI_LIST       | request Server to perform a WiFi AP scan
 DATA | 0x00    | BLUFI_TYPE_DATA_SUBTYPE_NEG                 |
-DATA | 0x01    | BLUFI_TYPE_DATA_SUBTYPE_STA_BSSID           |
-DATA | 0x02    | BLUFI_TYPE_DATA_SUBTYPE_STA_SSID            |
-DATA | 0x03    | BLUFI_TYPE_DATA_SUBTYPE_STA_PASSWD          |
+DATA | 0x01    | BLUFI_TYPE_DATA_SUBTYPE_STA_BSSID           | 6-byte BSSID
+DATA | 0x02    | BLUFI_TYPE_DATA_SUBTYPE_STA_SSID            | 1..32 character SSID value
+DATA | 0x03    | BLUFI_TYPE_DATA_SUBTYPE_STA_PASSWD          | 1..64 character PSK value
 DATA | 0x04    | BLUFI_TYPE_DATA_SUBTYPE_SOFTAP_SSID         |
 DATA | 0x05    | BLUFI_TYPE_DATA_SUBTYPE_SOFTAP_PASSWD       |
 DATA | 0x06    | BLUFI_TYPE_DATA_SUBTYPE_SOFTAP_MAX_CONN_NUM |
 DATA | 0x07    | BLUFI_TYPE_DATA_SUBTYPE_SOFTAP_AUTH_MODE    |
 DATA | 0x08    | BLUFI_TYPE_DATA_SUBTYPE_SOFTAP_CHANNEL      |
 DATA | 0x09    | BLUFI_TYPE_DATA_SUBTYPE_USERNAME            |
-DATA | 0x0a    | BLUFI_TYPE_DATA_SUBTYPE_CA                  |
-DATA | 0x0b    | BLUFI_TYPE_DATA_SUBTYPE_CLIENT_CERT         |
-DATA | 0x0c    | BLUFI_TYPE_DATA_SUBTYPE_SERVER_CERT         |
-DATA | 0x0d    | BLUFI_TYPE_DATA_SUBTYPE_CLIENT_PRIV_KEY     |
-DATA | 0x0e    | BLUFI_TYPE_DATA_SUBTYPE_SERVER_PRIV_KEY     |
-DATA | 0x0f    | BLUFI_TYPE_DATA_SUBTYPE_WIFI_REP            |
-DATA | 0x10    | BLUFI_TYPE_DATA_SUBTYPE_REPLY_VERSION       |
-DATA | 0x11    | BLUFI_TYPE_DATA_SUBTYPE_WIFI_LIST           |
+DATA | 0x0A    | BLUFI_TYPE_DATA_SUBTYPE_CA                  |
+DATA | 0x0B    | BLUFI_TYPE_DATA_SUBTYPE_CLIENT_CERT         |
+DATA | 0x0C    | BLUFI_TYPE_DATA_SUBTYPE_SERVER_CERT         |
+DATA | 0x0D    | BLUFI_TYPE_DATA_SUBTYPE_CLIENT_PRIV_KEY     |
+DATA | 0x0E    | BLUFI_TYPE_DATA_SUBTYPE_SERVER_PRIV_KEY     |
+DATA | 0x0F    | BLUFI_TYPE_DATA_SUBTYPE_WIFI_REP            | WiFi status report
+DATA | 0x10    | BLUFI_TYPE_DATA_SUBTYPE_REPLY_VERSION       | BluFi version report
+DATA | 0x11    | BLUFI_TYPE_DATA_SUBTYPE_WIFI_LIST           | WiFi scan report
 DATA | 0x12    | BLUFI_TYPE_DATA_SUBTYPE_ERROR_INFO          |
-DATA | 0x13    | BLUFI_TYPE_DATA_SUBTYPE_CUSTOM_DATA         |
+DATA | 0x13    | BLUFI_TYPE_DATA_SUBTYPE_CUSTOM_DATA         | Client-to-Server arbitrary (undefined) binary transfer as example of passing data
 
 **NOTE**: These will be extended as we add functionality specific to
 the Microbiota Labs world, so the table above should not be taken as
@@ -247,14 +275,110 @@ have the following worked examples:
 provided to ensure clarity. e.g. Encrypted and checksummed packets as
 well as detailed descriptions of the **DATA** supplied in the packets.
 
+**NOTE**: A valid "configuration" sequence after connecting to the
+Server to configure the device as a station (STA) associating against
+a WPA-PSK AP would be:
+
+- write FF01 with binary packet for BLUFI_TYPE_CTRL_SUBTYPE_SET_WIFI_OPMODE opmode WIFI_MODE_STA
+- write FF01 with binary packet for BLUFI_TYPE_IS_DATA_STA_SSID with SSID string
+- write FF01 with binary packet for BLUFI_TYPE_IS_DATA_STA_PASSWD with PSK string
+- write FF01 with binary packet for BLUFI_TYPE_CTRL_SUBTYPE_CONN_TO_AP
+- handler FF02 read of BLUFI_TYPE_DATA_SUBTYPE_WIFI_REP containing the WiFi status
+
+The binary dumps below show the packets in more detail.
+
+#### WiFi configure mode
+```
+Write ServiceUUID=FFFF UUID=FF01 Value=08 08 00 01 01
+	type = 08      		 00001000    type=0=BLUFI_TYPE_CTRL subtype=000010=0x2=BLUFI_TYPE_CTRL_SUBTYPE_SET_WIFI_OPMODE
+	fc = 08			 00001000    RQACK (and implied BLUFI_FC_DIR_P2E)
+	seq = 00
+	data_len = 01
+	data = 01		 OPMODE == 0x01 == WIFI_MODE_STA
+```
+
+Since RQACK is set we expect (and get) an asynchronous response on 0xFF02:
+```
+Receive Value Notification ServiceUUID=FFFF UUID=FF02 Value=00 04 00 01 00
+	type = 00
+	fc = 04                 00000100	BLUFI_FC_DIR_E2P
+	seq = 00		matches seq of original request
+	data_len = 01
+	data = 00		0x00 == OK
+```
+
+The valid OPMODE byte values are:
+
+name            | `wifi_mode_t` value | description
+----------------|:-------------------:|:-----------
+WIFI_MODE_STA   | 0x01                | Station mode
+WIFI_MODE_AP    | 0x02                | Access Point (SoftAP)
+WIFI_MODE_APSTA | 0x03                | SoftAP and Station
+
+#### WiFi configure SSID
+```
+Write ServiceUUID=FFFF UUID=FF01 Value=09 00 01 08 73 68 6d 6f 75 73 69 65
+	type = 09		 00001001    type=1=BLUFI_TYPE_DATA subtype=000010=0x2=BLUFI_TYPE_IS_DATA_STA_SSID
+	fc = 00
+	seq = 01
+	data_len = 08
+	data = 73 68 6d 6f 75 73 69 65		"shmousie"
+```
+
+#### WiFi configure PSK
+```
+Write ServiceUUID=FFFF UUID=FF01 Value=0D 00 02 0E xx yy zz xx yy zz xx yy zz xx yy zz xx yy
+	type = 0D		 00001101    type=1=BLUFI_TYPE_DATA subtype=000011=0x3=BLUFI_TYPE_IS_DATA_STA_PASSWD
+	fc = 00
+	seq = 02
+	data_len = 0E
+	data = ...elided.. 	 Password string
+```
+
+#### WiFi request connect to AP
+```
+Write ServiceUUID=FFFF UUID=FF01 Value=0c 00 03 00
+	type = 0C		 00001100    type=0=BLUFI_TYPE_CTRL subtype=000011=0x3=BLUFI_TYPE_CTRL_SUBTYPE_CONN_TO_AP
+	fc = 00
+	seq = 03
+	data_len = 00
+```
+
 #### WiFi status
+
+After sending BLUFI_TYPE_CTRL_SUBTYPE_CONN_TO_AP we expect a status response:
+```
+Receive Value Notification ServiceUUID=FFFF UUID=FF02 Value=3D 04 01 15 01 00 00 01 06 64 66 B3 3A E0 33 02 08 73 68 6D 6F 75 73 69 65
+	type = 3D                00111101    type=1=BLUFI_TYPE_DATA subtype=001111=0xF=BLUFI_TYPE_DATA_SUBTYPE_WIFI_REP
+	fc = 04			 00000100    BLUFI_FC_DIR_E2P
+	seq = 01
+	data_len = 15
+	data = 01 00 00 01 06 64 66 B3 3A E0 33 02 08 73 68 6D 6F 75 73 69 65
+		opmode = 01		(wifi_mode_t) 01 == WIFI_MODE_STA
+		sta_conn_state = 00	(esp_blufi_sta_conn_state_t) 00 == SUCCESS
+		softap_conn_num = 00	(uint8_t)
+		01 = BLUFI_TYPE_DATA_SUBTYPE_STA_BSSID
+		06 = len
+		64 66 B3 3A E0 33 = BSSID
+		02 = BLUFI_TYPE_DATA_SUBTYPE_STA_SSID
+		08 = len
+		73 68 6D 6F 75 73 69 65 = SSID  "shmousie"
+```
+
+The `sta_conn_state` field as shown above is **`0x00`** indicating
+SUCCESS. The value **`0x01`** indicates FAIL.
+
+#### WiFi request status
 ```
 Write ServiceUUID=FFFF UUID=FF01 Value=14 00 01 00
 	type = 14      		 00010100    type=0=BLUFI_TYPE_CTRL subtype=000101=0x5=BLUFI_TYPE_CTRL_SUBTYPE_GET_WIFI_STATUS
 	fc = 00
 	seq = 01
 	data_len = 00
+```
 
+We will then receive a WIFI_REP response on 0xFF02:
+```
 Received ServiceUUID=FFFF UUID=FF02 Value=
 	0000   3d 04 01 15 01 00 00 01 06 64 66 b3 3a e0 33 02  =........df.:.3.
 	0010   08 73 68 6d 6f 75 73 69 65                       .shmousie
@@ -264,9 +388,9 @@ Received ServiceUUID=FFFF UUID=FF02 Value=
 	seq = 01
 	data_len = 15
 	data =
-		opmode = 01		??
-		sta_conn_state = 00	??
-		softap_conn_num = 00	??
+		opmode = 01		(wifi_mode_t) 01 == WIFI_MODE_STA
+		sta_conn_state = 00	(esp_blufi_sta_conn_state_t) 00 == SUCCESS
+		softap_conn_num = 00	(uint8_t)
 		01 = BLUFI_TYPE_DATA_SUBTYPE_STA_BSSID
 		06 = len
 		64 66 B3 3A E0 33 = BSSID
@@ -340,6 +464,10 @@ Received ServiceUUID=FFFF UUID=FF02 Value=
 ```
 
 #### Disconnect BLE
+This is just a notification to the Server that the Client is about to
+disconnect, and is not related to the internal Client BLE disconnect
+operation.
+
 ```
 Write ServiceUUID=FFFF UUID=FF01 Value=20 00 04 00
 	type = 20      00100000	type=0b00=0x0=BLUFI_TYPE_CTRL subtype=0b001000=0x8=BLUFI_TYPE_CTRL_SUBTYPE_DISCONNECT_BLE
