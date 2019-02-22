@@ -197,7 +197,7 @@ DATA | 0x0E    | BLUFI_TYPE_DATA_SUBTYPE_SERVER_PRIV_KEY     |
 DATA | 0x0F    | BLUFI_TYPE_DATA_SUBTYPE_WIFI_REP            | WiFi status report
 DATA | 0x10    | BLUFI_TYPE_DATA_SUBTYPE_REPLY_VERSION       | BluFi version report
 DATA | 0x11    | BLUFI_TYPE_DATA_SUBTYPE_WIFI_LIST           | WiFi scan report
-DATA | 0x12    | BLUFI_TYPE_DATA_SUBTYPE_ERROR_INFO          | BluFi error report see [Errors](#bluefi-errors)
+DATA | 0x12    | BLUFI_TYPE_DATA_SUBTYPE_ERROR_INFO          | BluFi error report see [Errors](#blufi-errors)
 DATA | 0x13    | BLUFI_TYPE_DATA_SUBTYPE_CUSTOM_DATA         | Client-to-Server arbitrary (undefined) binary transfer as example of passing data
 
 **NOTE**: These will be extended as we add functionality specific to
