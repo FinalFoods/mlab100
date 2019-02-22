@@ -167,38 +167,38 @@ seen by the ESP32 scan.
 
 Currently the defined packet **subtype** encodings are:
 
-type | subtype | name                                                                                | notes
-----:|:-------:|:------------------------------------------------------------------------------------|:-----
-CTRL | 0x00    | BLUFI_TYPE_CTRL_SUBTYPE_ACK                                                         |
-CTRL | 0x01    | BLUFI_TYPE_CTRL_SUBTYPE_SET_SEC_MODE                                                |
-CTRL | 0x02    | [BLUFI_TYPE_CTRL_SUBTYPE_SET_WIFI_OPMODE](#blufi_type_ctrl_subtype_set_wifi_opmode) | configure WiFi mode : 1-byte (wifi_mode_t) value
-CTRL | 0x03    | [BLUFI_TYPE_CTRL_SUBTYPE_CONN_TO_AP](#blufi_type_ctrl_subtype_conn_to_ap)           | request Server to connect to configured AP
-CTRL | 0x04    | BLUFI_TYPE_CTRL_SUBTYPE_DISCONN_FROM_AP                                             |
-CTRL | 0x05    | [BLUFI_TYPE_CTRL_SUBTYPE_GET_WIFI_STATUS](#blufi_type_ctrl_subtype_get_wifi_status) | request current WiFi connection status
-CTRL | 0x06    | BLUFI_TYPE_CTRL_SUBTYPE_DEAUTHENTICATE_STA                                          |
-CTRL | 0x07    | [BLUFI_TYPE_CTRL_SUBTYPE_GET_VERSION](#blufi_type_ctrl_subtype_get_version)         | request BluFi version (**NOTE**: This is **NOT** the firmware version string, but the description of the BluFi protocol implemented)
-CTRL | 0x08    | BLUFI_TYPE_CTRL_SUBTYPE_DISCONNECT_BLE                                              |
-CTRL | 0x09    | [BLUFI_TYPE_CTRL_SUBTYPE_GET_WIFI_LIST](#blufi_type_ctrl_subtype_get_wifi_list)     | request Server to perform a WiFi AP scan
-DATA | 0x00    | BLUFI_TYPE_DATA_SUBTYPE_NEG                                                         |
-DATA | 0x01    | BLUFI_TYPE_DATA_SUBTYPE_STA_BSSID                                                   | 6-byte BSSID
-DATA | 0x02    | BLUFI_TYPE_DATA_SUBTYPE_STA_SSID                                                    | 1..32 character SSID value
-DATA | 0x03    | BLUFI_TYPE_DATA_SUBTYPE_STA_PASSWD                                                  | 1..64 character PSK value
-DATA | 0x04    | BLUFI_TYPE_DATA_SUBTYPE_SOFTAP_SSID                                                 |
-DATA | 0x05    | BLUFI_TYPE_DATA_SUBTYPE_SOFTAP_PASSWD                                               |
-DATA | 0x06    | BLUFI_TYPE_DATA_SUBTYPE_SOFTAP_MAX_CONN_NUM                                         |
-DATA | 0x07    | BLUFI_TYPE_DATA_SUBTYPE_SOFTAP_AUTH_MODE                                            |
-DATA | 0x08    | BLUFI_TYPE_DATA_SUBTYPE_SOFTAP_CHANNEL                                              |
-DATA | 0x09    | BLUFI_TYPE_DATA_SUBTYPE_USERNAME                                                    |
-DATA | 0x0A    | BLUFI_TYPE_DATA_SUBTYPE_CA                                                          |
-DATA | 0x0B    | BLUFI_TYPE_DATA_SUBTYPE_CLIENT_CERT                                                 |
-DATA | 0x0C    | BLUFI_TYPE_DATA_SUBTYPE_SERVER_CERT                                                 |
-DATA | 0x0D    | BLUFI_TYPE_DATA_SUBTYPE_CLIENT_PRIV_KEY                                             |
-DATA | 0x0E    | BLUFI_TYPE_DATA_SUBTYPE_SERVER_PRIV_KEY                                             |
-DATA | 0x0F    | [BLUFI_TYPE_DATA_SUBTYPE_WIFI_REP](#blufi_type_data_subtype_wifi_rep)               | WiFi status report
-DATA | 0x10    | BLUFI_TYPE_DATA_SUBTYPE_REPLY_VERSION                                               | BluFi version report
-DATA | 0x11    | [BLUFI_TYPE_DATA_SUBTYPE_WIFI_LIST](#blufi_type_data_subtype_wifi_list)             | WiFi scan report
-DATA | 0x12    | BLUFI_TYPE_DATA_SUBTYPE_ERROR_INFO                                                  | BluFi error report see [Errors](#blufi-errors)
-DATA | 0x13    | BLUFI_TYPE_DATA_SUBTYPE_CUSTOM_DATA                                                 | Client-to-Server arbitrary (undefined) binary transfer as example of passing data
+type | subtype | name                                                                                  | notes
+----:|:-------:|:--------------------------------------------------------------------------------------|:-----
+CTRL | 0x00    | BLUFI_TYPE_CTRL_SUBTYPE_ACK                                                           |
+CTRL | 0x01    | [BLUFI_TYPE_CTRL_SUBTYPE_SET_SEC_MODE](#blufi_type_ctrl_subtype_set_sec_mode)         | 1-byte security mode flags encoding
+CTRL | 0x02    | [BLUFI_TYPE_CTRL_SUBTYPE_SET_WIFI_OPMODE](#blufi_type_ctrl_subtype_set_wifi_opmode)   | configure WiFi mode : 1-byte (wifi_mode_t) value
+CTRL | 0x03    | [BLUFI_TYPE_CTRL_SUBTYPE_CONN_TO_AP](#blufi_type_ctrl_subtype_conn_to_ap)             | request Server to connect to configured AP
+CTRL | 0x04    | BLUFI_TYPE_CTRL_SUBTYPE_DISCONN_FROM_AP                                               | request Server to disconnect from AP
+CTRL | 0x05    | [BLUFI_TYPE_CTRL_SUBTYPE_GET_WIFI_STATUS](#blufi_type_ctrl_subtype_get_wifi_status)   | request current WiFi connection status
+CTRL | 0x06    | BLUFI_TYPE_CTRL_SUBTYPE_DEAUTHENTICATE_STA                                            |
+CTRL | 0x07    | [BLUFI_TYPE_CTRL_SUBTYPE_GET_VERSION](#blufi_type_ctrl_subtype_get_version)           | request BluFi version (**NOTE**: This is **NOT** the firmware version string, but the description of the BluFi protocol implemented)
+CTRL | 0x08    | BLUFI_TYPE_CTRL_SUBTYPE_DISCONNECT_BLE                                                | notification from Client that it is about to disconnect the BLE-GATT connection
+CTRL | 0x09    | [BLUFI_TYPE_CTRL_SUBTYPE_GET_WIFI_LIST](#blufi_type_ctrl_subtype_get_wifi_list)       | request Server to perform a WiFi AP scan
+DATA | 0x00    | BLUFI_TYPE_DATA_SUBTYPE_NEG                                                           |
+DATA | 0x01    | BLUFI_TYPE_DATA_SUBTYPE_STA_BSSID                                                     | 6-byte BSSID
+DATA | 0x02    | BLUFI_TYPE_DATA_SUBTYPE_STA_SSID                                                      | 1..32 character SSID value
+DATA | 0x03    | BLUFI_TYPE_DATA_SUBTYPE_STA_PASSWD                                                    | 1..64 character PSK value
+DATA | 0x04    | BLUFI_TYPE_DATA_SUBTYPE_SOFTAP_SSID                                                   | 1..32 character SSID value
+DATA | 0x05    | BLUFI_TYPE_DATA_SUBTYPE_SOFTAP_PASSWD                                                 | 1..64 character PSK value
+DATA | 0x06    | BLUFI_TYPE_DATA_SUBTYPE_SOFTAP_MAX_CONN_NUM                                           | 1-byte maximum number of connections value
+DATA | 0x07    | [BLUFI_TYPE_DATA_SUBTYPE_SOFTAP_AUTH_MODE](#blufi_type_data_subtype_softap_auth_mode) | `(wifi_auth_mode_t)` value
+DATA | 0x08    | BLUFI_TYPE_DATA_SUBTYPE_SOFTAP_CHANNEL                                                | 1-byte channel number
+DATA | 0x09    | BLUFI_TYPE_DATA_SUBTYPE_USERNAME                                                      | currently **ignored** by ESP Server firmware
+DATA | 0x0A    | BLUFI_TYPE_DATA_SUBTYPE_CA                                                            | currently **ignored** by ESP Server firmware
+DATA | 0x0B    | BLUFI_TYPE_DATA_SUBTYPE_CLIENT_CERT                                                   | currently **ignored** by ESP Server firmware
+DATA | 0x0C    | BLUFI_TYPE_DATA_SUBTYPE_SERVER_CERT                                                   | currently **ignored** by ESP Server firmware
+DATA | 0x0D    | BLUFI_TYPE_DATA_SUBTYPE_CLIENT_PRIV_KEY                                               | currently **ignored** by ESP Server firmware
+DATA | 0x0E    | BLUFI_TYPE_DATA_SUBTYPE_SERVER_PRIV_KEY                                               | currently **ignored** by ESP Server firmware
+DATA | 0x0F    | [BLUFI_TYPE_DATA_SUBTYPE_WIFI_REP](#blufi_type_data_subtype_wifi_rep)                 | WiFi status report
+DATA | 0x10    | [BLUFI_TYPE_DATA_SUBTYPE_REPLY_VERSION](#blufi_type_data_subtype_reply_version)       | BluFi version report
+DATA | 0x11    | [BLUFI_TYPE_DATA_SUBTYPE_WIFI_LIST](#blufi_type_data_subtype_wifi_list)               | WiFi scan report
+DATA | 0x12    | [BLUFI_TYPE_DATA_SUBTYPE_ERROR_INFO](#blufi_errors)                                   | BluFi error report see [Errors](#blufi-errors)
+DATA | 0x13    | BLUFI_TYPE_DATA_SUBTYPE_CUSTOM_DATA                                                   | Client-to-Server arbitrary (undefined) binary transfer as example of passing data
 
 **NOTE**: These will be extended as we add functionality specific to
 the Microbiota Labs world, so the table above should not be taken as
@@ -365,6 +365,62 @@ Normally for a STA connection we would expect the fields
 `BLUFI_TYPE_DATA_SUBTYPE_STA_BSSID` and
 `BLUFI_TYPE_DATA_SUBTYPE_STA_SSID` to be provided. See [WiFi
 status](#wifi-status).
+
+#### BLUFI_TYPE_DATA_SUBTYPE_REPLY_VERSION
+
+This ESP32 Server `DATA` response provides BCD version information
+describing the BluFi protocol version in use by the Server.
+
+The response would normally be a 2-byte data field:
+
+```
++---1---+---1---+
+| major | minor |
++-------+-------+
+```
+
+Currently we expect major **`0x01`** with minor **`0x02`** which can
+be interpreted as **v1.02**,
+
+#### BLUFI_TYPE_DATA_SUBTYPE_SOFTAP_AUTH_MODE
+
+A single-byte data field containing a `wifi_auth_mode_t` enumeration
+value:
+
+name                      | value | notes
+:-------------------------|:-----:|:-----
+WIFI_AUTH_OPEN            | 0x00  | Unsecured
+WIFI_AUTH_WEP             | 0x01  | WEP
+WIFI_AUTH_WPA_PSK         | 0x02  | WPA PSK
+WIFI_AUTH_WPA2_PSK        | 0x03  | WPA2 PSK
+WIFI_AUTH_WPA_WPA2_PSK    | 0x04  | WPA or WPA2 PSK
+WIFI_AUTH_WPA2_ENTERPRISE | 0x05  | EAP-TLS
+
+The authorisation mode value isused to define the security of the
+SoftAP mode when configured for the ESP32 WiFi.
+
+#### BLUFI_TYPE_CTRL_SUBTYPE_SET_SEC_MODE
+
+This `CTRL` message allows the Client to select the BluFi protocol
+security features to be used. A single byte "flags" value is supplied:
+
+bit | mask | name                           | notes
+:--:|:----:|:-------------------------------|:-----
+0   | 0x01 | BLUFI_DATA_SEC_MODE_CHECK_MASK | 16-bit checksum appended to DATA packets
+1   | 0x02 | BLUFI_DATA_SEC_MODE_ENC_MASK   | Encrypted DATA packets
+4   | 0x10 | BLUFI_CTRL_SEC_MODE_CHECK_MASK | 16-bit checksum appended to CTRL packets
+5   | 0x20 | BLUFI_CTRL_SEC_MODE_ENC_MASK   | Encrypted CTRL packets
+
+The 16-bit checksum currently supported by the firmware is the ESP32
+ROM routine `crc16_be` (big-endian CRC-16) implementation. Which
+claims to be a standard CRC16-CCITT implementation (`x16+x12+x5+1`
+1021 ISO HDLC, ITU X.25, V.34/V.41/V.42, PPP-FCS).
+
+The encryption used is using pre-agreed keys and implementations
+between the Client and Server sides. The `mlab100` implementation is
+provided by [blufi_security.c](src/blufi_security.c) and is an
+implementation where the encrypted and plain-text encodings occupy the
+same space; allowing encode/decode in-situ.
 
 #### BluFi Errors
 
