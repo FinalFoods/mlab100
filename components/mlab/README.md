@@ -197,7 +197,7 @@ DATA | 0x0E    | BLUFI_TYPE_DATA_SUBTYPE_SERVER_PRIV_KEY     |
 DATA | 0x0F    | BLUFI_TYPE_DATA_SUBTYPE_WIFI_REP            | WiFi status report
 DATA | 0x10    | BLUFI_TYPE_DATA_SUBTYPE_REPLY_VERSION       | BluFi version report
 DATA | 0x11    | BLUFI_TYPE_DATA_SUBTYPE_WIFI_LIST           | WiFi scan report
-DATA | 0x12    | BLUFI_TYPE_DATA_SUBTYPE_ERROR_INFO          |
+DATA | 0x12    | BLUFI_TYPE_DATA_SUBTYPE_ERROR_INFO          | BluFi error report see [Errors](#bluefi-errors)
 DATA | 0x13    | BLUFI_TYPE_DATA_SUBTYPE_CUSTOM_DATA         | Client-to-Server arbitrary (undefined) binary transfer as example of passing data
 
 **NOTE**: These will be extended as we add functionality specific to
@@ -258,7 +258,12 @@ FRAG  | 4   | 0x10 | Packet is fragmented
 Fragmented packets are terminated by a non-fragmented packet.
 
 The `seq` number is just a monotonically increasing sequence number
-for the packets in a transaction.
+for the packets in a transaction. The BluFi Server firmware
+**EXPECTS** the sequence number to be monotonically increasing for
+each received packet from the Client. The sequence number expected is
+reset to **`0x00`** on a DISCONNECT event. So a Client should always
+start fromm 0x00 at the start-of-day, or when a new connection to the
+BLE-GATT Server is established.
 
 The `data_len` fields provides the number of bytes of data following
 the packet headers as defined above. The fragmented packets having the
@@ -267,6 +272,25 @@ ensure any buffers they pre-allocate for the data based on the
 received header can be large enough. i.e. the first packet in a
 fragmented sequence will give the total size needed to re-assemble the
 data.
+
+#### BluFi Errors
+
+The `BLUFI_TYPE_DATA_SUBTYPE_ERROR_INFO` packet provides a 1-byte
+error code:
+
+name                          | code | notes
+:-----------------------------|:----:|:-----
+ESP_BLUFI_SEQUENCE_ERROR      | 0x00 |
+ESP_BLUFI_CHECKSUM_ERROR      | 0x01 |
+ESP_BLUFI_DECRYPT_ERROR       | 0x02 |
+ESP_BLUFI_ENCRYPT_ERROR       | 0x03 |
+ESP_BLUFI_INIT_SECURITY_ERROR | 0x04 |
+ESP_BLUFI_DH_MALLOC_ERROR     | 0x05 |
+ESP_BLUFI_DH_PARAM_ERROR      | 0x06 |
+ESP_BLUFI_READ_PARAM_ERROR    | 0x07 |
+ESP_BLUFI_MAKE_PUBLIC_ERROR   | 0x08 |
+
+
 
 From wireshark investigation of Android captured `btsnoop_hci.log` we
 have the following worked examples:
