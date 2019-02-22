@@ -194,7 +194,7 @@ DATA | 0x0B    | BLUFI_TYPE_DATA_SUBTYPE_CLIENT_CERT                            
 DATA | 0x0C    | BLUFI_TYPE_DATA_SUBTYPE_SERVER_CERT                                                 |
 DATA | 0x0D    | BLUFI_TYPE_DATA_SUBTYPE_CLIENT_PRIV_KEY                                             |
 DATA | 0x0E    | BLUFI_TYPE_DATA_SUBTYPE_SERVER_PRIV_KEY                                             |
-DATA | 0x0F    | BLUFI_TYPE_DATA_SUBTYPE_WIFI_REP                                                    | WiFi status report
+DATA | 0x0F    | [BLUFI_TYPE_DATA_SUBTYPE_WIFI_REP](#blufi_type_data_subtype_wifi_rep)               | WiFi status report
 DATA | 0x10    | BLUFI_TYPE_DATA_SUBTYPE_REPLY_VERSION                                               | BluFi version report
 DATA | 0x11    | [BLUFI_TYPE_DATA_SUBTYPE_WIFI_LIST](#blufi_type_data_subtype_wifi_list)             | WiFi scan report
 DATA | 0x12    | BLUFI_TYPE_DATA_SUBTYPE_ERROR_INFO                                                  | BluFi error report see [Errors](#blufi-errors)
@@ -340,6 +340,31 @@ order based on "closeness". After the RSSI is the SSID value (of
 
 As mentioned since the data returned is likely to be larger than the
 MTU in use the data will be fragmented across multiple packets.
+
+#### BLUFI_TYPE_DATA_SUBTYPE_WIFI_REP
+
+This `DATA` response from the Server provides information about the
+current WiFi status.
+
+```
++---1---+---1---+---1---+-------n-------+
+| mode  | state | conn# | `DATA` fields |
++-------+-------+-------+---------------+
+```
+
+The first 3-bytes have a fixed meaning. Those bytes are followed by
+tuples containing data describing the WiFi connection:
+
+```
++----1----+----2----+-------------n-------------+
+| subtype |   len   | specific data for subtype |
++---------+---------+---------------------------+
+```
+
+Normally for a STA connection we would expect the fields
+`BLUFI_TYPE_DATA_SUBTYPE_STA_BSSID` and
+`BLUFI_TYPE_DATA_SUBTYPE_STA_SSID` to be provided. See [WiFi
+status](#wifi-status).
 
 #### BluFi Errors
 
