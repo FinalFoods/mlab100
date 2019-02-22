@@ -196,7 +196,7 @@ DATA | 0x0D    | BLUFI_TYPE_DATA_SUBTYPE_CLIENT_PRIV_KEY                        
 DATA | 0x0E    | BLUFI_TYPE_DATA_SUBTYPE_SERVER_PRIV_KEY                                             |
 DATA | 0x0F    | BLUFI_TYPE_DATA_SUBTYPE_WIFI_REP                                                    | WiFi status report
 DATA | 0x10    | BLUFI_TYPE_DATA_SUBTYPE_REPLY_VERSION                                               | BluFi version report
-DATA | 0x11    | BLUFI_TYPE_DATA_SUBTYPE_WIFI_LIST                                                   | WiFi scan report
+DATA | 0x11    | [BLUFI_TYPE_DATA_SUBTYPE_WIFI_LIST](#blufi_type_data_subtype_wifi_list)             | WiFi scan report
 DATA | 0x12    | BLUFI_TYPE_DATA_SUBTYPE_ERROR_INFO                                                  | BluFi error report see [Errors](#blufi-errors)
 DATA | 0x13    | BLUFI_TYPE_DATA_SUBTYPE_CUSTOM_DATA                                                 | Client-to-Server arbitrary (undefined) binary transfer as example of passing data
 
@@ -317,6 +317,29 @@ This `CTRL` request provides no data (so `data_len` should be
 **`0x00`**). It triggers the Server to perform a WiFi scan for APs,
 and will result in a `BLUFI_TYPE_DATA_SUBTYPE_WIFI_LIST` response
 packet after a few seconds.
+
+#### BLUFI_TYPE_DATA_SUBTYPE_WIFI_LIST
+
+This (normally fragmented into multiple packets) response from the
+Server provides information on APs seen from a
+`BLUFI_TYPE_CTRL_SUBTYPE_GET_WIFI_LIST` request.
+
+The data returned consistes of a set of tuples consisting of:
+
+```
++---1---+---1---+---(len - 1)---+
+|  len  | RSSI  |     SSID      |
++-------+-------+---------------+
+```
+
+The 1-byte `len` allows the individual record to be stepped over
+**PLUS** it is used to derive the length of the SSID for the specific
+AP. The 2nd-byte is the RSSI value for the AP, allowing the Client to
+order based on "closeness". After the RSSI is the SSID value (of
+`len`-1 bytes).
+
+As mentioned since the data returned is likely to be larger than the
+MTU in use the data will be fragmented across multiple packets.
 
 #### BluFi Errors
 
