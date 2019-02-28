@@ -63,6 +63,179 @@ static onewire_search_t onewire_ds;
 #define MAX_SENSORS 3
 static onewire_addr_t sensors[MAX_SENSORS];
 
+//-----------------------------------------------------------------------------
+
+/* The binary data passed between the Client and Server application layers is a
+   simple set of tuples. There are no gaps and it is expected that the packet
+   length encompasses a valid tuple though processing code should validate that
+   the supplied "len" does NOT exceed the total binary blob boundary. */
+typedef struct ml_app_tuple {
+    uint8_t len; // length of this field
+    uint8_t code; // operation encoding
+    uint8_t data[0]; // zero or more bytes of "(len - 1)" data bytes
+} __attribute__((packed)) ml_app_tuple_t;
+
+// "code" values:
+#define OPCODE_EXTENSION (0x00) // use next byte for "code"
+/* TODO:DEFINE: initial set of requests/actions/data we need to pass between the Client and Server implementations. */
+// all other codes are currently undefined and IGNORED
+
+//-----------------------------------------------------------------------------
+/* NOTE: The FreeRTOS implementation used by esp-idf does NOT support
+   MessageBuffer (StreamBuffer) which could be a good wrapper onto
+   single-write/single-reader copy based messaging. */
+
+/* We pass data by reference between the receiver(s) and the main application
+   loop. This approach allows multiple writes, for the single control loop
+   reader and avoids an overly large queue element. */
+typedef struct event_appdata {
+    uint32_t len;
+    uint8_t *p_data; // arbitrary data of "len" bytes
+} event_appdata_t;
+
+//-----------------------------------------------------------------------------
+/* We use a FreeRTOS queue to transfer received data from the BLE-GATT world to
+   the main application control loop. */
+
+#define QUEUE_DEPTH_APPDATA (4) // maximum number of "in-flight" queued items in mailbox
+
+static xQueueHandle queue_appdata = NULL;
+
+#if (configSUPPORT_STATIC_ALLOCATION == 1)
+/* Since this message queue is a critical infrastructure item we statically
+   allocate its resources to avoid low dynamic run-time memory affecting this
+   core control mechanism. */
+static event_appdata_t queue_storage_appdata[QUEUE_DEPTH_APPDATA];
+static StaticQueue_t queue_appdata;
+#endif // configSUPPORT_STATIC_ALLOCATION
+
+//-----------------------------------------------------------------------------
+// Exported to common mlab BluFi support
+
+void mlab_app_data(const uint8_t *p_buffer,uint32_t blen)
+{
+    /* WARNING: This function should NOT block.
+       If we need to pass the binary to another thread we should make a COPY. */
+    if (queue_appdata) {
+        ESP_LOGD(p_tag,"AppData blen %u",blen);
+
+        /* CONSIDER: Ideally we would NOT be using dynamic memory allocation
+           here (since it can create fragmentation arguments or lead to
+           transient undesirable behaviour. We should re-implement using a
+           pre-allocated message/stream buffer equivalent, */
+
+        uint8_t *p_copy = (uint8_t *)malloc(blen);
+        if (p_copy) {
+            event_appdata_t appdata;
+
+            (void)memcpy(p_copy,p_buffer,blen);
+
+            appdata.p_data = p_copy;
+            appdata.len = blen;
+
+            if (pdTRUE != xQueueSendToBack(queue_appdata,&appdata,0)) {
+                ESP_LOGE(p_tag,"Dropped AppData blen %u since queue full",blen);
+            }
+        } else {
+            ESP_LOGW(p_tag,"Dropped AppData blen %u due to OOM",blen);
+        }
+    } else {
+        ESP_LOGW(p_tag,"Dropped AppData blen %u since no queue",blen);
+    }
+
+    return;
+}
+
+//-----------------------------------------------------------------------------
+/* Since the app_main() functionality below provides multiple control loops
+   depending on its state, we provide this single implementation for checking
+   the BluFi interaction (and any other processing we want common to the
+   different control loops). */
+
+static void app_main_control(void)
+{
+    event_appdata_t appdata;
+
+    // Do not block waiting for data:
+    if (xQueueReceive(queue_appdata,&appdata,0)) {
+        if (appdata.p_data && appdata.len) {
+            ESP_LOGD(p_tag,"AppData foreground len %u",appdata.len);
+
+            /* This is just a simple initial implementation. We may want to be
+               triggering other application events (e.g. sampling data, starting
+               a process, etc.) depending on the actions/events/data
+               received. */
+#if 1 // DIAGnostic
+            uint8_t *p_tuple = appdata.p_data;
+            uint32_t remaining = appdata.len;
+
+            while (remaining) {
+                uint8_t tlen = *p_tuple++;
+
+                remaining--;
+
+                if (remaining <  tlen) {
+                    ESP_LOGW(p_tag,"Tuple length %u exceeds remaining %u : ignoring",tlen,remaining);
+                    remaining = 0; // terminate scan
+                } else {
+                    uint32_t opcode = 0;
+                    uint32_t level = 0;
+                    do {
+                        if (remaining < tlen) {
+                            ESP_LOGW(p_tag,"Tuple length %u exceeds remaining %u (code scan): ignoring",tlen,remaining);
+                            remaining = 0; // terminate scan
+                            break;
+                        }
+
+                        uint8_t code = *p_tuple++;
+
+                        tlen--; // length of remaining data
+                        remaining--; // remaining in binary buffer
+
+                        if (OPCODE_EXTENSION == code) {
+                            level++;
+                            if ((1 << 24) == level) {
+                                ESP_LOGW(p_tag,"Tuple code scan level exceeds limit: ignoring");
+                                remaining = 0;
+                                break;
+                            }
+                        } else {
+                            opcode = ((level << 8) | code);
+                        }
+                    } while (0 == opcode);
+
+                    if (opcode) {
+                        ESP_LOGI(p_tag,"AppData opcode 0x%" PRIX32 " data %u-byte%s",opcode,tlen,((1 == tlen) ? "" : "s"));
+                        if (tlen) {
+                            esp_log_buffer_hex(" OpcodeData",p_tuple,tlen);
+                        }
+
+                        /* IMPLEMENT: Whatever actions are needed for the opcode value */
+
+                        /* e.g. trigger a set (i.e. multiple items if needed) of
+                          individually "code"-identified data via:
+
+                             build_tuples_into_somebuffer;
+                             mlab_app_data_send(somebuffer,sizeof(somebuffer)
+                        */
+                    }
+
+                    if (remaining) {
+                        remaining -= tlen;
+                    }
+                }
+            }
+#endif // boolean
+        }
+
+        free(appdata.p_data);
+    }
+
+    return;
+}
+
+//-----------------------------------------------------------------------------
+
 void app_main(void)
 {
     ESP_LOGI(p_tag,"Application starting " STRINGIFY(MLAB_VERSION) " (BUILDTIMESTAMP %" PRIX64 ")",(uint64_t)BUILDTIMESTAMP);
@@ -133,6 +306,15 @@ void app_main(void)
     ESP_ERROR_CHECK(ret);
 
     ESP_LOGI(p_tag,"esp-idf " IDF_VER);
+
+#if (configSUPPORT_STATIC_ALLOCATION == 1)
+    queue_appdata = xQueueCreateStatic(QUEUE_DEPTH_APPDATA,sizeof(event_appdata_t),(uint8_t *)queue_storage_appdata,&queue_appdata);
+#else // dynamic
+    queue_appdata = xQueueCreate(QUEUE_DEPTH_APPDATA,sizeof(event_appdata_t));
+#endif // dynamic
+    if (NULL == queue_appdata) {
+        ESP_LOGE(p_tag,"Failed to create main appdata queue");
+    }
 
     app_common_platform_init();
 #if defined(CONFIG_MLAB_HTTPD) && CONFIG_MLAB_HTTPD
@@ -216,6 +398,8 @@ void app_main(void)
             }
         }
 
+        app_main_control();
+
     } while(!onewire_ds.last_device_found && (count <= MAX_SENSORS));
     printf("1Wire search: found %d devices.\n", count);
 
@@ -245,6 +429,11 @@ void app_main(void)
     int toggle = 1;
        
     while (1) {
+        /* TODO: If we want the temperature reads to be synchronised at some
+           frequency we should do it off of a timer worker or similar rather
+           than a vTaskDelay() in this loop; since we may want higher frequency
+           polling of other subsystems (e.g. BLE-GATT) by this control loop. */
+
         printf("Temperature[0x%llx]: %0.1f °C\n", sensors[0], ds18b20_get_temp(sensors[0]));
         printf("Temperature[0x%llx]: %0.1f °C\n", sensors[1], ds18b20_get_temp(sensors[1]));
         printf("Temperature[0x%llx]: %0.1f °C\n", sensors[2], ds18b20_get_temp(sensors[2]));
@@ -275,6 +464,8 @@ void app_main(void)
             toggle = 1;
 
 //#endif // boolean
+
+        app_main_control();
     }
 
     // This point should not be reached normally:

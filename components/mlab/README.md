@@ -198,7 +198,7 @@ DATA | 0x0F    | [BLUFI_TYPE_DATA_SUBTYPE_WIFI_REP](#blufi_type_data_subtype_wif
 DATA | 0x10    | [BLUFI_TYPE_DATA_SUBTYPE_REPLY_VERSION](#blufi_type_data_subtype_reply_version)       | BluFi version report
 DATA | 0x11    | [BLUFI_TYPE_DATA_SUBTYPE_WIFI_LIST](#blufi_type_data_subtype_wifi_list)               | WiFi scan report
 DATA | 0x12    | [BLUFI_TYPE_DATA_SUBTYPE_ERROR_INFO](#blufi_errors)                                   | BluFi error report see [Errors](#blufi-errors)
-DATA | 0x13    | BLUFI_TYPE_DATA_SUBTYPE_CUSTOM_DATA                                                   | Client-to-Server arbitrary (undefined) binary transfer as example of passing data
+DATA | 0x13    | [BLUFI_TYPE_DATA_SUBTYPE_CUSTOM_DATA](#blufi_type_data_subtype_custom_data)           | Arbitrary (undefined) binary transfer used for Client<->Server application data communication
 
 **NOTE**: These will be extended as we add functionality specific to
 the Microbiota Labs world, so the table above should not be taken as
@@ -272,6 +272,76 @@ ensure any buffers they pre-allocate for the data based on the
 received header can be large enough. i.e. the first packet in a
 fragmented sequence will give the total size needed to re-assemble the
 data.
+
+#### BLUFI_TYPE_DATA_SUBTYPE_CUSTOM_DATA
+
+This `DATA` packet is the main application level API communication
+between the Client and Server sides.
+
+For the BLE-GATT (BluFi) layer it is treated as an arbitrary content
+binary blob (no interpretation of the data is performed as regards the
+Bluetooth transport).
+
+For the Client and Server applications the data is treated as a set of
+tuples:
+
+```
+uint8_t len; // length of this field
+uint8_t code; // encoding // use 0x00 for EXTENSION meaning next byte is encoding
+uint8_t data[0]; // zero or more bytes of "(len - 1)" data bytes
+```
+
+The 8-bit `code` field is defined by the application API between the
+Client (mobile) and Server (ESP32 firmware) worlds.
+
+As mentioned the use of `code==0x00` indicates that the next data-byte
+is the encoding (and so-on). This allows arbitrary extension of the
+opcode number space if needed. Though it is likely that for our
+relatively simple application the remaining `0x01`..`0xFF` (255)
+opcodes should be sufficient for all Client<->Server communication.
+
+At its simplest the meaning/interpretation of a `code` value depends
+on the side of the protocol receiving that data. This means we can
+avoid the management of extra direction-meaning having to be encoded
+in the number space. i.e. a `ML_APP_STATUS` value will have no
+associated data when it is a poll request from the Client to the
+Server to obtain the current firmware status, but the same encoded
+value can be used **with** associated data when it is a response from
+the Server to the Client with the current firmware state. We can
+encode simple requests for information, actions to be performed, or
+supply data as needed.
+
+We can always extend the encoding in the future if we need to; but
+ensuring (for example) that code==0x00 means EXTENDED and the next
+databyte is the operation "code" (allowing for arbitrary extension if
+we do need more and more individual opcodes
+
+The ESP32 firmware application implementation receives a simple
+callback when data is received. It is the responsibility of that
+callback implementation to make a copy of the supplied buffer if
+processing needs to be passed to a different context (e.g. across
+thread boundaries using a mailbox) since the scope of the buffer is
+controlled by the BLE-GATT implementation.
+
+```
+void mlab_app_data(const uint8_t *p_buffer,uint32_t blen);
+```
+
+The implementation of the callback should be to **NOT**-block, and to
+be as timely an implementation as possible (since it is called within
+the BLE-GATT profile event mechanism and delays could affect the BLE
+operation).
+
+For transmitting data from the firmware to the Client then the
+function:
+
+```
+esp_err_t mlab_app_data_send(const uint8_t *p_buffer,uint32_t blen);
+```
+
+is used. NOTE: This makes a copy of the data for use within the
+BLE-GATT world so the caller controls (owns) the scope of the buffer
+passed.
 
 #### BLUFI_TYPE_CTRL_SUBTYPE_SET_WIFI_OPMODE
 

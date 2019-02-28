@@ -143,6 +143,31 @@ esp_err_t mlab_blufi_start(void);
 
 //-----------------------------------------------------------------------------
 
+/**
+ * This callback function is supplied by the application. It is called when an
+ * arbitrary binary blob is received from the Client. The application is
+ * responsible for interpreting the meaning of the binary blob. It is important
+ * that the callback implemented should NOT block, and be as timely as
+ * possible. Since the passed buffer is in the scope of the BLE-GATT profile
+ * handler if the application needs to pass the data to other threads of control
+ * then a COPY should be made of the data.
+ *
+ * @param p_buffer Pointer to at least blen bytes of data.
+ * @param blen Number of valid data bytes from p_buffer.
+ */
+void mlab_app_data(const uint8_t *p_buffer,uint32_t blen);
+
+/**
+ * Send a binary data blob to the Client application.
+ *
+ * @param p_buffer Pointer to blen bytes of data to transmit.
+ * @param blen Number of valid data bytes from p_buffer.
+ * @return ESP_OK on success, otherwise an error indication.
+ */
+esp_err_t mlab_app_data_send(const uint8_t *p_buffer,uint32_t blen);
+
+//-----------------------------------------------------------------------------
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif // __cplusplus

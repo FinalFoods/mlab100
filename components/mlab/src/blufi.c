@@ -104,8 +104,8 @@ static esp_ble_adv_params_t adv_params = {
 //-----------------------------------------------------------------------------
 
 /* BLE connection information: */
-static uint8_t server_if = 0; // TODO:VERIFY: That a valid server_if can never be 0
-static uint16_t conn_id = 0;
+static volatile uint8_t server_if = 0; // we assume that a valid server_if can never be 0
+static volatile uint16_t conn_id = 0;
 
 //-----------------------------------------------------------------------------
 // Unfortunate global state for tracking data between BluFi events:
@@ -351,8 +351,15 @@ static void blufi_event_callback(esp_blufi_cb_event_t event,esp_blufi_cb_param_t
         break;
 
     case ESP_BLUFI_EVENT_RECV_CUSTOM_DATA:
-        BLUFI_INFO("Recv Custom Data %d",p_param->custom_data.data_len);
-        esp_log_buffer_hex("Custom Data",p_param->custom_data.data,p_param->custom_data.data_len);
+        BLUFI_INFO("AppData len %u",p_param->custom_data.data_len);
+        esp_log_buffer_hex("AppData",p_param->custom_data.data,p_param->custom_data.data_len);
+        /* Unfortunately the Espressif implementation does not support a private
+           context to be supplied, which means we need to rely on global state
+           here and cannot reference some specific state. */
+        /* We hide any application requirements behind this wrapper - so we do
+           not implement any needed copy here; we let the application do what is
+           needed depending on how it implements any thread coherency. */
+        mlab_app_data(p_param->custom_data.data,p_param->custom_data.data_len);
         break;
 
     case ESP_BLUFI_EVENT_RECV_USERNAME:
@@ -461,6 +468,19 @@ esp_err_t mlab_blufi_start(void)
     }
 
     return ret;
+}
+
+//-----------------------------------------------------------------------------
+
+esp_err_t mlab_app_data_send(const uint8_t *p_buffer,uint32_t blen)
+{
+    esp_err_t rcode = ESP_ERR_NOT_FOUND; // "no connection" failure indicator
+
+    if (server_if) {
+        rcode = esp_blufi_send_custom_data((uint8_t *)p_buffer,blen);
+    }
+
+    return rcode;
 }
 
 //-----------------------------------------------------------------------------
