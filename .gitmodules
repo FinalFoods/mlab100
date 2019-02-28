@@ -1,6 +1,6 @@
 [submodule "3rd_party/esp-idf"]
 	path = 3rd_party/esp-idf
-	url = https://github.com/espressif/esp-idf.git
+	url = https://github.com/MicrobiotaLabs/esp-idf.git
 [submodule "3rd_party/mkspiffs"]
 	path = 3rd_party/mkspiffs
 	url = https://github.com/MicrobiotaLabs/mkspiffs.git
