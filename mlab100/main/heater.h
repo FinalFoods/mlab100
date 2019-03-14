@@ -11,6 +11,12 @@
  */
 extern void heater_init(void);
 
+/**
+ * Set Heater level.
+ *
+ */
+extern int heater_set(int level);
+
 //-----------------------------------------------------------------------------
 
 #endif // !_heater_

@@ -25,9 +25,11 @@
 #define LEDC_HS_CH0_CHANNEL    LEDC_CHANNEL_0
 
 #define LEDC_TEST_CH_NUM       (1)
-#define LEDC_TEST_DUTY         (7232)
+#define LEDC_MAX_DUTY          (8192)
+#define LEDC_TEST_DUTY         (40)
+#define LEDC_TEST_ZERO          (0)
 /*
- * Prepare and set configuration of timers
+ * Prepare and set configuration of timers 7232
  * that will be used by LED Controller
  *
  * With PWM frequency at 5 kHz, the maximum duty resolution is 13 bits. 
@@ -44,7 +46,7 @@ ledc_timer_config_t ledc_timer = {
 
 //-----------------------------------------------------------------------------
 // Initialize the heater
-
+//
 void heater_init(void){
     int ch;
 
@@ -68,6 +70,17 @@ void heater_init(void){
         ledc_set_duty(ledc_channel[ch].speed_mode, ledc_channel[ch].channel, LEDC_TEST_DUTY);
         ledc_update_duty(ledc_channel[ch].speed_mode, ledc_channel[ch].channel);
     }
+}
+
+// Set the heater level. Level must be between 0 and LEDC_MAX_DUTY (8192)
+//
+int heater_set(int level) {
+    if ((level < 0) || (level > LEDC_MAX_DUTY))
+        return -1;
+
+    ledc_set_duty(LEDC_HS_MODE, LEDC_HS_CH0_CHANNEL, LEDC_TEST_DUTY);
+    ledc_update_duty(LEDC_HS_MODE, LEDC_HS_CH0_CHANNEL);
+    return 0;
 }
 
 //=============================================================================
