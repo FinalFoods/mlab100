@@ -120,7 +120,8 @@ static esp_err_t adc_conversion(spi_device_handle_t spi,uint8_t channel,uint32_t
     assert(ESP_OK == ret);
 
     if (p_result) {
-        uint32_t result = ((t.rx_data[0] << 24) | ((t.rx_data[1] & 0xF) << 20));
+        // uint32_t result = ((t.rx_data[0] << 24) | ((t.rx_data[1] & 0xF) << 20));
+        uint32_t result = (((t.rx_data[0] & 0xF) << 28) | ((t.rx_data[1] & 0xF) << 20));
         *p_result = result;
     }
 
