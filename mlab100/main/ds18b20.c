@@ -152,7 +152,7 @@ float ds18b20_get_temp(onewire_addr_t device_addr) {
 
     onewire_select(ONEWIRE_PIN, device_addr);
     onewire_write(ONEWIRE_PIN, 0x44); // Convert T (move value into Scratchpad)
-    vTaskDelay(750 / portTICK_RATE_MS);
+    vTaskDelay(150 / portTICK_RATE_MS);   // was 750ms
     onewire_reset(ONEWIRE_PIN);
 
     onewire_select(ONEWIRE_PIN, device_addr);
@@ -160,7 +160,7 @@ float ds18b20_get_temp(onewire_addr_t device_addr) {
 
     temp1 = onewire_read(ONEWIRE_PIN);
     temp2 = onewire_read(ONEWIRE_PIN);
-    reply = onewire_reset(ONEWIRE_PIN);
+//    reply = onewire_reset(ONEWIRE_PIN);
 
     // printf("\ttemp1: 0x%X temp2: 0x%X ds18b20_RST_PULSE: %d\n", temp1, temp2, reply); // DEBUG
     float temp = 0;
