@@ -16,6 +16,7 @@
 
 #include "driver/ledc.h"
 #include "esp_err.h"
+#include "heater.h"
 #include "mlab100.h"
 
 // control the heater using LEDC channel 0
@@ -24,10 +25,6 @@
 #define LEDC_HS_CH0_GPIO       (32)
 #define LEDC_HS_CH0_CHANNEL    LEDC_CHANNEL_0
 
-#define LEDC_TEST_CH_NUM       (1)
-#define LEDC_MAX_DUTY          (8192)
-#define LEDC_TEST_DUTY         (40)
-#define LEDC_TEST_ZERO          (0)
 /*
  * Prepare and set configuration of timers 7232
  * that will be used by LED Controller
@@ -78,7 +75,7 @@ int heater_set(int level) {
     if ((level < 0) || (level > LEDC_MAX_DUTY))
         return -1;
 
-    ledc_set_duty(LEDC_HS_MODE, LEDC_HS_CH0_CHANNEL, LEDC_TEST_DUTY);
+    ledc_set_duty(LEDC_HS_MODE, LEDC_HS_CH0_CHANNEL, level);
     ledc_update_duty(LEDC_HS_MODE, LEDC_HS_CH0_CHANNEL);
     return 0;
 }
