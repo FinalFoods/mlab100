@@ -74,16 +74,16 @@ typedef enum {
     IDLE,
     COOLING,
     HEATING
-}   device_states_t;
+}   heater_states_t;
 
 // Device heating control
 typedef struct  {
-	device_states_t state;
+	heater_states_t state;
 	float	temperature;
 	float	setpoint;
 	float	histeresis;
 	float	adjustment;
-} device_t;
+} heater_t;
 
 // string representation of state
 #define STATE2STR(state) (state == IDLE ? "IDLE" : (state == HEATING ? "HEATING" : "COOLING"))

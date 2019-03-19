@@ -65,7 +65,7 @@ static onewire_addr_t sensors[MAX_SENSORS];
 
 static  TickType_t xLastWakeTime;
 
-static device_t device;
+static heater_t heater;
 
 //-----------------------------------------------------------------------------
 
@@ -182,42 +182,31 @@ static void app_main_control(void)
 
     // Wait for the next cycle.
     vTaskDelayUntil(&xLastWakeTime, xFrequency);
-    //printf("xLastWakeTime: %d\n", xLastWakeTime);
 
-    device.temperature = get_temperature();
-    printf("[%d] mode: %s temperature: %0.1f\n", xTaskGetTickCount(), STATE2STR(device.state), device.temperature);
+    heater.temperature = get_temperature();
+    printf("[%d] mode: %s temperature: %0.1f\n", xTaskGetTickCount(), STATE2STR(heater.state), heater.temperature);
 
-    switch (device.state) {
+    switch (heater.state) {
         case IDLE:
-            if (device.temperature < (device.setpoint - device.adjustment)) {
-                // switch to heating mode
-                HEATER_ON();
-                device.state = HEATING;
-            } else {
-                // switch to cooling mode
-                HEATER_OFF();
-                device.state = COOLING;
-            }
+            // the device heater is idle: do nothing
             break;
         case COOLING:
-            if (device.temperature < (device.setpoint - device.histeresis)) {
+            if (heater.temperature < (heater.setpoint - heater.histeresis)) {
                 // switch to heating mode
                 HEATER_ON();
-                device.state = HEATING;
+                heater.state = HEATING;
             }
             break;
         case HEATING:
-            if (device.temperature > (device.setpoint - device.adjustment)) {
-                if (device.temperature > (device.setpoint + device.histeresis)) {
+            if (heater.temperature > (heater.setpoint - heater.adjustment)) {
+                if (heater.temperature > (heater.setpoint + heater.histeresis)) {
                     // switch to cooling mode
                     HEATER_OFF();
-                    device.state = COOLING;                   
+                    heater.state = COOLING;                   
                 }
             }
             break; 
     }
-
-
 
 
     // Do not block waiting for data:
@@ -493,12 +482,23 @@ void app_main(void)
     // Initialise global xLastWakeTime variable with the current time.
     xLastWakeTime = xTaskGetTickCount ();
 
-    // Initial device state
-    device.state = IDLE;
-    device.temperature = get_temperature();
-    device.setpoint = 74.0;
-    device.histeresis = 0.5;
-    device.adjustment = 5.0;
+    // Initial heater state
+    heater.state = IDLE;
+    heater.temperature = get_temperature();
+    heater.setpoint = 74.0;
+    heater.histeresis = 0.5;
+    heater.adjustment = 5.0;
+
+    // to kick the action at startup -- eventually triggered by user events
+    if (heater.temperature < (heater.setpoint - heater.adjustment)) {
+        // switch to heating mode
+        HEATER_ON();
+        heater.state = HEATING;
+    } else {
+        // switch to cooling mode
+        HEATER_OFF();
+        heater.state = COOLING;
+    }
 
     while (1) {
   
