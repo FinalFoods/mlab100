@@ -80,6 +80,7 @@ typedef enum {
 typedef struct  {
 	heater_states_t state;
 	float	temperature;
+	float	gradient;
 	float	setpoint;
 	float	histeresis;
 	float	adjustment;

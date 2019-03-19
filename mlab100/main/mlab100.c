@@ -66,6 +66,7 @@ static onewire_addr_t sensors[MAX_SENSORS];
 static  TickType_t xLastWakeTime;
 
 static heater_t heater;
+static float last_temperature;  // used to calculate the gradient
 
 //-----------------------------------------------------------------------------
 
@@ -153,7 +154,7 @@ void mlab_app_data(const uint8_t *p_buffer,uint32_t blen)
 //-----------------------------------------------------------------------------
 // Used in the heater controller
 
-// Get the average temperature in C from sensors
+// Get the average heater temperature in Celsius from sensors
 static float get_temperature(void) {
     float res = 0.;
     int i;
@@ -170,10 +171,13 @@ static float get_temperature(void) {
    the BluFi interaction (and any other processing we want common to the
    different control loops). */
 
+#define LOOP_FREQUENCY  (1000)
+
 static void app_main_control(void)
 {
     event_appdata_t appdata;
-    const TickType_t xFrequency = (1000 / portTICK_PERIOD_MS);
+    const TickType_t xFrequency = (LOOP_FREQUENCY / portTICK_PERIOD_MS);
+    const float time_scale = 1000 / LOOP_FREQUENCY;  // scale to seconds
 
    /* TODO: If we want the temperature control to be synchronised at some
        frequency we should do it off of a timer worker or similar rather
@@ -184,7 +188,8 @@ static void app_main_control(void)
     vTaskDelayUntil(&xLastWakeTime, xFrequency);
 
     heater.temperature = get_temperature();
-    printf("[%d] mode: %s temperature: %0.1f\n", xTaskGetTickCount(), STATE2STR(heater.state), heater.temperature);
+    heater.gradient = (last_temperature - heater.temperature) * time_scale; // in degrees/second
+    printf("[%d] mode: %s temperature: %0.1f (%0.1f)\n", xTaskGetTickCount(), STATE2STR(heater.state), heater.temperature, heater.gradient);
 
     switch (heater.state) {
         case IDLE:
@@ -488,6 +493,8 @@ void app_main(void)
     heater.setpoint = 74.0;
     heater.histeresis = 0.5;
     heater.adjustment = 5.0;
+
+    last_temperature = heater.temperature;
 
     // to kick the action at startup -- eventually triggered by user events
     if (heater.temperature < (heater.setpoint - heater.adjustment)) {
