@@ -63,6 +63,10 @@ static onewire_search_t onewire_ds;
 #define MAX_SENSORS 3
 static onewire_addr_t sensors[MAX_SENSORS];
 
+static  TickType_t xLastWakeTime;
+
+static device_t device;
+
 //-----------------------------------------------------------------------------
 
 /* The binary data passed between the Client and Server application layers is a
@@ -147,6 +151,20 @@ void mlab_app_data(const uint8_t *p_buffer,uint32_t blen)
 }
 
 //-----------------------------------------------------------------------------
+// Used in the heater controller
+
+// Get the average temperature in C from sensors
+static float get_temperature(void) {
+    float res = 0.;
+    int i;
+
+    for (i = 0; i < MAX_SENSORS; i++)
+        res += ds18b20_get_temp(sensors[i]);
+
+    return (res / MAX_SENSORS);
+}
+
+//-----------------------------------------------------------------------------
 /* Since the app_main() functionality below provides multiple control loops
    depending on its state, we provide this single implementation for checking
    the BluFi interaction (and any other processing we want common to the
@@ -155,6 +173,52 @@ void mlab_app_data(const uint8_t *p_buffer,uint32_t blen)
 static void app_main_control(void)
 {
     event_appdata_t appdata;
+    const TickType_t xFrequency = (1000 / portTICK_PERIOD_MS);
+
+   /* TODO: If we want the temperature control to be synchronised at some
+       frequency we should do it off of a timer worker or similar rather
+       than a vTaskDelay() in this loop; since we may want higher frequency
+       polling of other subsystems (e.g. BluFi events) by this control loop. */
+
+    // Wait for the next cycle.
+    vTaskDelayUntil(&xLastWakeTime, xFrequency);
+    //printf("xLastWakeTime: %d\n", xLastWakeTime);
+
+    device.temperature = get_temperature();
+    printf("[%d] mode: %s temperature: %0.1f\n", xTaskGetTickCount(), STATE2STR(device.state), device.temperature);
+
+    switch (device.state) {
+        case IDLE:
+            if (device.temperature < (device.setpoint - device.adjustment)) {
+                // switch to heating mode
+                HEATER_ON();
+                device.state = HEATING;
+            } else {
+                // switch to cooling mode
+                HEATER_OFF();
+                device.state = COOLING;
+            }
+            break;
+        case COOLING:
+            if (device.temperature < (device.setpoint - device.histeresis)) {
+                // switch to heating mode
+                HEATER_ON();
+                device.state = HEATING;
+            }
+            break;
+        case HEATING:
+            if (device.temperature > (device.setpoint - device.adjustment)) {
+                if (device.temperature > (device.setpoint + device.histeresis)) {
+                    // switch to cooling mode
+                    HEATER_OFF();
+                    device.state = COOLING;                   
+                }
+            }
+            break; 
+    }
+
+
+
 
     // Do not block waiting for data:
     if (xQueueReceive(queue_appdata,&appdata,0)) {
@@ -339,10 +403,10 @@ void app_main(void)
     }
 
     spi_device_handle_t opamp_adc = app_init_spi();
-    ESP_LOGD(p_tag,"opamp_adc %p",opamp_adc);
+    ESP_LOGI(p_tag,"opamp_adc %p",opamp_adc);
  
     // initialize GPIO output pins -- onewire is setup by its own library
-    #define GPIO_OUTPUT_PIN_SEL  ((1ULL<<CONTROL_3V3) | (1ULL<<GREEN_LED) | (1ULL<<YELLOW_LED) | (1ULL<<RED_LED) | (1ULL<<UV1_LED) | (1ULL<<UV2_LED) )
+    #define GPIO_OUTPUT_PIN_SEL  ((1ULL<<FAN_CTRL) | (1ULL<<CONTROL_3V3) | (1ULL<<GREEN_LED) | (1ULL<<YELLOW_LED) | (1ULL<<RED_LED) | (1ULL<<UV1_LED) | (1ULL<<UV2_LED) )
 
     gpio_config_t io_conf;
     //disable interrupt
@@ -358,18 +422,17 @@ void app_main(void)
     //configure GPIO with the given settings
     gpio_config(&io_conf);
 
+    // turn on 3.3V
+    gpio_set_direction(CONTROL_3V3, GPIO_MODE_OUTPUT);
+    gpio_set_level(CONTROL_3V3, 1);
+
     gpio_pad_select_gpio(GREEN_LED);
     gpio_pad_select_gpio(YELLOW_LED);
     // gpio_pad_select_gpio(RED_LED);
     gpio_pad_select_gpio(CONTROL_3V3);
 
-
-   // initialize the heater
+    // initialize the heater
     heater_init();
-
-    // turn on 3.3V
-    gpio_set_direction(CONTROL_3V3, GPIO_MODE_OUTPUT);
-    gpio_set_level(CONTROL_3V3, 1);
 
     // initilize 1wire
     if (onewire_reset(ONEWIRE_PIN))
@@ -393,12 +456,13 @@ void app_main(void)
             if ((ticknow - ticklast) >= 1000) {
                 printf("Error searching the 1wire bus.\n");
                 ticklast = ticknow;
+                break;
             } else {
                 vTaskDelay(10); // avoids the watchdog triggering // which we still get with a simple taskYIELD() call
             }
         }
 
-        app_main_control();
+        // app_main_control();
 
     } while(!onewire_ds.last_device_found && (count <= MAX_SENSORS));
     printf("1Wire search: found %d devices.\n", count);
@@ -408,15 +472,15 @@ void app_main(void)
 
     // turn on green LED
     gpio_set_direction(GREEN_LED, GPIO_MODE_OUTPUT);
-    gpio_set_level(GREEN_LED, 0);
+    gpio_set_level(GREEN_LED, 1);
 
     // turn on yellow LED
     gpio_set_direction(YELLOW_LED, GPIO_MODE_OUTPUT);
-    gpio_set_level(YELLOW_LED, 0);
+    gpio_set_level(YELLOW_LED, 1);
 
     // turn on red LED
-    // gpio_set_direction(RED_LED, GPIO_MODE_OUTPUT);
-    gpio_set_level(RED_LED, 0);
+    gpio_set_direction(RED_LED, GPIO_MODE_OUTPUT);
+    gpio_set_level(RED_LED, 1);
 
     // turn on U/V LED 1
     gpio_set_direction(UV1_LED, GPIO_MODE_OUTPUT);
@@ -426,30 +490,38 @@ void app_main(void)
     gpio_set_direction(UV2_LED, GPIO_MODE_OUTPUT);
     gpio_set_level(UV2_LED, 1);
 
-    int toggle = 1;
-       
-    while (1) {
-        /* TODO: If we want the temperature reads to be synchronised at some
-           frequency we should do it off of a timer worker or similar rather
-           than a vTaskDelay() in this loop; since we may want higher frequency
-           polling of other subsystems (e.g. BLE-GATT) by this control loop. */
+    // Initialise global xLastWakeTime variable with the current time.
+    xLastWakeTime = xTaskGetTickCount ();
 
+    // Initial device state
+    device.state = IDLE;
+    device.temperature = get_temperature();
+    device.setpoint = 74.0;
+    device.histeresis = 0.5;
+    device.adjustment = 5.0;
+
+    while (1) {
+  
+#if 0
+        // heater on
+        int hcount = 0;
+        heater_set(LEDC_MAX_DUTY);
+        printf("[%d] Heater ON ---------\n", xTaskGetTickCount ());
+        vTaskDelay(250 / portTICK_RATE_MS);
+
+        // fan off
+        gpio_set_direction(FAN_CTRL, GPIO_MODE_OUTPUT);
+        gpio_set_level(FAN_CTRL, 0);
+
+        // stabilize 1wire after heater or fan switch
+        ds18b20_get_temp(sensors[0]);ds18b20_get_temp(sensors[1]);ds18b20_get_temp(sensors[2]);
+     
+
+        /* Simple "slightly busy" loop where we sleep to allow the IDLE task to
+           execute so that it can tickle its watchdog. */
         printf("Temperature[0x%llx]: %0.1f °C\n", sensors[0], ds18b20_get_temp(sensors[0]));
         printf("Temperature[0x%llx]: %0.1f °C\n", sensors[1], ds18b20_get_temp(sensors[1]));
         printf("Temperature[0x%llx]: %0.1f °C\n", sensors[2], ds18b20_get_temp(sensors[2]));
- 
-        /* Simple "slightly busy" loop where we sleep to allow the IDLE task to
-           execute so that it can tickle its watchdog. */
-        vTaskDelay(1000 / portTICK_PERIOD_MS); // this avoids the IDLE watchdog triggering
-
-//#if 0 // simple test
-        // turn on U/V LED 1
-        gpio_set_direction(UV1_LED, GPIO_MODE_OUTPUT);
-        gpio_set_level(UV1_LED, toggle);
-
-        // turn on U/V LED 2
-        gpio_set_direction(UV2_LED, GPIO_MODE_OUTPUT);
-        gpio_set_level(UV2_LED, toggle);
 
         uint32_t in1;
         uint32_t in2;
@@ -458,13 +530,19 @@ void app_main(void)
             ESP_LOGI(p_tag,"IN1 0x%08X IN2 0x%08X",in1,in2);
         }
         
-        if (toggle) 
-            toggle = 0;
-        else
-            toggle = 1;
+        // heat for 30 seconds
+        if (hcount++ == 30) {
+            heater_set(0);
+            printf("[%d] Heater OFF ---------\n", xTaskGetTickCount ());
 
-//#endif // boolean
+            // fan on
+            gpio_set_level(FAN_CTRL, 1);
 
+            // stabilize 1wire
+            ds18b20_get_temp(sensors[0]);ds18b20_get_temp(sensors[1]);ds18b20_get_temp(sensors[2]);
+    //           onewire_reset(ONEWIRE_PIN);
+        }
+#endif
         app_main_control();
     }
 

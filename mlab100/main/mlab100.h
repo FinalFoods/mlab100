@@ -64,6 +64,33 @@
 // heater PWM pin
 #define HEATER_CTRL		(32)
 
+// fan GPIP
+#define FAN_CTRL	(17)
+
+//-----------------------------------------------------------------------------
+
+// Device current state
+typedef enum {
+    IDLE,
+    COOLING,
+    HEATING
+}   device_states_t;
+
+// Device heating control
+typedef struct  {
+	device_states_t state;
+	float	temperature;
+	float	setpoint;
+	float	histeresis;
+	float	adjustment;
+} device_t;
+
+// string representation of state
+#define STATE2STR(state) (state == IDLE ? "IDLE" : (state == HEATING ? "HEATING" : "COOLING"))
+
+#define HEATER_OFF() {printf("heater_off()\n");heater_set(0);gpio_set_level(FAN_CTRL, 1);ds18b20_get_temp(sensors[0]);ds18b20_get_temp(sensors[1]);ds18b20_get_temp(sensors[2]);}
+#define HEATER_ON() {printf("heater_on()\n");heater_set(1);gpio_set_level(FAN_CTRL, 0);ds18b20_get_temp(sensors[0]);ds18b20_get_temp(sensors[1]);ds18b20_get_temp(sensors[2]);}
+
 #endif // !__mlab100_h
 
 //=============================================================================
